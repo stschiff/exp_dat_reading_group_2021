@@ -1,20 +1,20 @@
-#Draft Schedule (idea: Starting in September 2021)
+# Draft Schedule (idea: Starting in September 2021)
 
 ### Session 0: First get-together and planning session
- - Date: Sep 3, 2021 
+- Date: Sep 3, 2021 
 
 ### Session 1: What is Principal Component analysis?
- - Date: Sep 10, 2021
- - Presenters:
- - Reading: Menozzi, Piazza, and Cavalli-Sforza, “Synthetic Maps of Human Gene Frequencies in Europeans” [@menozzi1994]
- - Reading: Novembre et al., “Genes Mirror Geography within Europe.” [@Novembre2008]
+- Date: Sep 10, 2021
+- Presenters:
+- Reading: Menozzi, Piazza, and Cavalli-Sforza, “Synthetic Maps of Human Gene Frequencies in Europeans” [@menozzi1994]
+- Reading: Novembre et al., “Genes Mirror Geography within Europe.” [@Novembre2008]
 
 ### Session 2: (Practical): How to use PCA?
-    - Date: Sep 17, 2021
-    - Presenters:
-    - Tools: smartpca,
-    - Data: HGDP, thinned down (?)
-    - Topics: PCA, F2, MDS, connections between them
+- Date: Sep 17, 2021
+- Presenters:
+- Tools: smartpca,
+- Data: HGDP, thinned down (?)
+- Topics: PCA, F2, MDS, connections between them
 
 ### Session 3: Missing data and projection
     - Date: Sep 24, 2021
