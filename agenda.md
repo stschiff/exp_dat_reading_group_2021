@@ -1,31 +1,84 @@
 #Draft Schedule (idea: Starting in September 2021)
-(Sep 3, 2021) First get together and planning session
-What is PCA? Menozzi, Piazza, and Cavalli-Sforza, “Synthetic Maps of Human Gene Frequencies in Europeans”; Novembre et al., “Genes Mirror Geography within Europe.”
-How to use PCA? Practical: HGDP, perhaps thinned down, world-wide… PCA, F2-matrices, MDS, connection between PCA+MDS
-What about missingness and projection? (Agrawal et al. 2020; Meisner et al. 2021) (something about missing data and projection for PCA. Possibly also Nick’s least-sq thing (https://github.com/DReichLab/EIG/blob/master/POPGEN/lsqproject.pdf))
-How to deal with missingness and projection? Dealing with missing data: 
-“Standard projection”: Using SNP loadings to project samples into pre-computed PCs
-“Standard missingness”: Filling in missing data with mean freqs.
-“Standard” way to deal with projection in MDS?
-Smartpca:
-https://cran.r-project.org/web/packages/softImpute/index.html
-What is Structure/Admixture? Structure / Admixture… entweder als Review oder die Original-Paper
 
+### Session 0: First get-together and planning session
+ - Date: Sep 3, 2021 
 
+### Session 1: What is Principal Component analysis?
+ - Date: Sep 10, 2021
+ - Presenters:
+ - Reading: Menozzi, Piazza, and Cavalli-Sforza, “Synthetic Maps of Human Gene Frequencies in Europeans” [@menozzi1994]
+ - Reading: Novembre et al., “Genes Mirror Geography within Europe.” [@Novembre2008]
 
+### Session 2: (Practical): How to use PCA?
+    - Date: Sep 17, 2021
+    - Presenters:
+    - Tools: smartpca,
+    - Data: HGDP, thinned down (?)
+    - Topics: PCA, F2, MDS, connections between them
 
-How to run Admixture?
-Run admixture
-Run admixture in supervised mode
-Comparison with PCA (auch PCA on ADMIXTURE components?)
-Foundational principles behind PCA/Admixture:
-Engelhardt and Stephens, “Analysis of Population Structure.” + (McVean 2009)
-Simulations:
-Simulations using msPrime under given sample sizes and coalecence rates
-How does it look on PCA? See McVean 2009
-Further topics:
-tSNE
-UMAP
-PCA based on other matrices such as Fine-Structure
-Detailed discussion of MDS vs PCA
+### Session 3: Missing data and projection
+    - Date: Sep 24, 2021
+    - Reading: Meisner et al. 2021
+    - Reading: Agrawal et al. 2020
 
+### Session 4 (Practical): How to deal with missing data
+    - Date: Oct 1, 2021
+    - Tools:[https://cran.r-project.org/web/packages/softImpute/index.html](softImpute)
+    - Tool: [https://github.com/DReichLab/EIG/blob/master/POPGEN/lsqproject.pdf](least square projection)
+    - Approaches
+        - mean imputation
+        - projection
+        - EM-imputation
+        - MDS-projection?
+
+### Session 5: Structure / Admixture
+    - Date: Oct 8, 2021
+    - Reading: 
+        - Pritchard et al. 2000
+        - Alexander et al. 2009 (Admixture)
+        - maybe some review
+    
+### Session 6 (Practical): How to run Admixture?
+    - Date: Oct 15, 2021
+    - Tool: [https://dalexander.github.io/admixture/download.html](ADMIXTURE)
+    - Task: Run admixture
+    - Task: Run admixture in supervised mode
+    - Task: Comparison with PCA
+    - Task: PCA on Admixture components (?)
+
+### Session 7: Foundational principles behind PCA/Admixture
+    - Date: Oct 22, 2021
+    - Reading: Engelhardt and Stephens, “Analysis of Population Structure.”
+    - Reading: McVean 2009
+
+### Session 8 (Practical): Simulations / predictions
+    - Date: Oct 29, 2021
+    - Tool: [https://tskit.dev/msprime/docs/stable/intro.html](msprime)
+    - Task: Simulation with sample sizes / coalescence rates
+    - Task: Predicted PCA vs Simulations
+
+### Session 9: Topic TBD
+    - Date: Nov 5, 2021
+
+### Session 10: Topic TBD
+    - Date: Nov 12, 2021
+
+### Session 11: Topic TBD
+    - Date: Nov 19, 2021
+
+### Session 12: Topic TBD
+    - Date: Nov 26, 2021
+
+### Session 13: Topic TBD
+    - Date: Dec 3, 2021
+
+### Session 13: Topic TBD
+    - Date: Dec 10, 2021
+
+## Further topics:
+ - tSNE
+ - UMAP
+ - PCA based on other matrices such as Fine-Structure
+ - Detailed discussion of MDS vs PCA
+ - F-statistics and PCA
+ - qpADM and PCA
