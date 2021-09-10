@@ -12,20 +12,20 @@
 
 ### Session 2: (Practical): How to use PCA?
 - Date: Sep 24, 2021
-- Presenters: Stephan, Ben, Thiseas
+- Presenters: Stephan, Thiseas
 - Tools: smartpca,
 - Data: HGDP, thinned down (?)
 - Topics: PCA, F2, MDS, connections between them
 
 ### Session 3: Missing data and projection
 - Date: Oct 1, 2021
-- Presenters: Luca, Alba
+- Presenters: Luca, Thiseas
 - Reading: Meisner et al. 2021
 - Reading: Agrawal et al. 2020
 
 ### Session 4 (Practical): How to deal with missing data
 - Date: Oct 8, 2021
-- Presenters:
+- Presenters: Clemens, Ben V.
 - Tools:[https://cran.r-project.org/web/packages/softImpute/index.html](softImpute)
 - Tool: [https://github.com/DReichLab/EIG/blob/master/POPGEN/lsqproject.pdf](least square projection)
 - Approaches
@@ -36,15 +36,15 @@
 
 ### Session 5: Structure / Admixture
 - Date: Oct 15, 2021
-- Presenters:
+- Presenters: Leonardo A., Ke
 - Reading: 
   - Pritchard et al. 2000
   - Alexander et al. 2009 (Admixture)
-  - maybe some review
+  - maybe some review (for example Falush "Badmixture")
     
 ### Session 6 (Practical): How to run Admixture?
 - Date: Oct 22, 2021
-- Presenters:
+- Presenters: Sandra, Laura, Joscha
 - Tool: [https://dalexander.github.io/admixture/download.html](ADMIXTURE)
 - Tasks: Run admixture
     - Run admixture in supervised mode
@@ -54,13 +54,13 @@
 
 ### Session 7: Foundational principles behind PCA/Admixture
 - Date: Oct 29, 2021
-- Presenters:
+- Presenters: Stephan, Federica, Alba
 - Reading: Engelhardt and Stephens, “Analysis of Population Structure.”
 - Reading: McVean 2009
 
 ### Session 8 (Practical): Simulations / predictions
 - Date: Nov 5, 2021
-- Presenters:
+- Presenters: Leonardo I., ?
 - Tool: [https://tskit.dev/msprime/docs/stable/intro.html](msprime)
 - Tasks 
     - Simulation with sample sizes / coalescence rates
