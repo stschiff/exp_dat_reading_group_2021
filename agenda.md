@@ -26,8 +26,8 @@
 ### Session 4 (Practical): How to deal with missing data
 - Date: Oct 8, 2021
 - Presenters: Clemens, Ben V.
-- Tools:[https://cran.r-project.org/web/packages/softImpute/index.html](softImpute)
-- Tool: [https://github.com/DReichLab/EIG/blob/master/POPGEN/lsqproject.pdf](least square projection)
+- Tools: [softImpute](https://cran.r-project.org/web/packages/softImpute/index.html)
+- Tool: [least square projection](https://github.com/DReichLab/EIG/blob/master/POPGEN/lsqproject.pdf)
 - Approaches
   - mean imputation
   - projection
@@ -45,7 +45,7 @@
 ### Session 6 (Practical): How to run Admixture?
 - Date: Oct 22, 2021
 - Presenters: Sandra, Laura, Joscha
-- Tool: [https://dalexander.github.io/admixture/download.html](ADMIXTURE)
+- Tool: [ADMIXTURE](https://dalexander.github.io/admixture/download.html)
 - Tasks: Run admixture
     - Run admixture in supervised mode
     - Comparison with PCA
@@ -61,7 +61,7 @@
 ### Session 8 (Practical): Simulations / predictions
 - Date: Nov 5, 2021
 - Presenters: Leonardo I., ?
-- Tool: [https://tskit.dev/msprime/docs/stable/intro.html](msprime)
+- Tool: [msprime](https://tskit.dev/msprime/docs/stable/intro.html)
 - Tasks 
     - Simulation with sample sizes / coalescence rates
     - Task: Predicted PCA vs Simulations
