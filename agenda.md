@@ -5,21 +5,21 @@
 
 ### Session 1: What is Principal Component analysis?
 - Date: Sep 17, 2021
-- Presenters:
+- Presenters: Yilei, Divyaratan
 - Reading: Menozzi, Piazza, and Cavalli-Sforza, “Synthetic Maps of Human Gene Frequencies in Europeans” [@menozzi1994]
 - Reading: https://liorpachter.wordpress.com/2014/05/26/what-is-principal-component-analysis/
 - Reading: Novembre et al., “Genes Mirror Geography within Europe.” [@Novembre2008]
 
 ### Session 2: (Practical): How to use PCA?
 - Date: Sep 24, 2021
-- Presenters:
+- Presenters: Stephan, Ben, Thiseas
 - Tools: smartpca,
 - Data: HGDP, thinned down (?)
 - Topics: PCA, F2, MDS, connections between them
 
 ### Session 3: Missing data and projection
 - Date: Oct 1, 2021
-- Presenters:
+- Presenters: Luca, Alba
 - Reading: Meisner et al. 2021
 - Reading: Agrawal et al. 2020
 
