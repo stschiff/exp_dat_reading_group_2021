@@ -50,6 +50,7 @@
     - Run admixture in supervised mode
     - Comparison with PCA
     - PCA on Admixture components (?)
+    - Dystruct?
 
 ### Session 7: Foundational principles behind PCA/Admixture
 - Date: Oct 29, 2021
