@@ -7,6 +7,7 @@
 - Date: Sep 17, 2021
 - Presenters:
 - Reading: Menozzi, Piazza, and Cavalli-Sforza, “Synthetic Maps of Human Gene Frequencies in Europeans” [@menozzi1994]
+- Reading: https://liorpachter.wordpress.com/2014/05/26/what-is-principal-component-analysis/
 - Reading: Novembre et al., “Genes Mirror Geography within Europe.” [@Novembre2008]
 
 ### Session 2: (Practical): How to use PCA?
