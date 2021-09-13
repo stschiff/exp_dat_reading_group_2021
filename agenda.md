@@ -60,7 +60,7 @@
 
 ### Session 8 (Practical): Simulations / predictions
 - Date: Nov 5, 2021
-- Presenters: Leonardo I., ?
+- Presenters: Leonardo I., Arev
 - Tool: [msprime](https://tskit.dev/msprime/docs/stable/intro.html)
 - Tasks 
     - Simulation with sample sizes / coalescence rates
