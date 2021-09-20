@@ -7,6 +7,7 @@ channels:
   - defaults
 dependencies:
   - python=3.7.1
+  - conda-forge::r=4.1
   - bioconda::eigensoft=7.2.1
-  - poseidon-trident
-  - jupyter
+  - bioconda::poseidon-trident
+  - pkgs/main::jupyter=1.0.0
