@@ -1,0 +1,11 @@
+Start with conda install help, use `environment.yml` to get all the tools right
+(smartPCA, Plink, Trident, Admixtools,...)
+
+Jupyter Notebooks!
+
+First chapter: Get data (trident fetch) [Stephan]
+
+Second chapter: Simple All-Eurasian PCA [Thiseas] and variations...
+
+Third chapter: Exploring batch effects between modern and ancient data without projection...
+
