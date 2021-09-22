@@ -12,3 +12,7 @@ dependencies:
   - bioconda::poseidon-trident
   - conda-forge::jupyter=1.0.0
   - conda-forge::r-irkernel=1.2
+  - conda-forge::rpy2=3.4.5=py37r40h238668a_0
+  - conda-forge::r-remotes=2.4.0=r40hc72bb7e_0
+  - conda-forge::r-gridextra=2.3=r40hc72bb7e_1003
+  
