@@ -22,19 +22,3 @@ conda env create -f environment.yml
 conda activate PCA_and_friends
 ```
 That's it. Now you should have all the tools ready.
-
-## Make sure trident is up to date
-
-For this session, we'll make use of `trident`, a tool to fetch and work with archaeogenetic data packages. At the point of writing this tutorial, the version of trident on conda was v0.18.1. We would like to use the much faster version v0.21.0, which can be installed with the following commands:
-
-On a Mac:
-```{bash}
-conda install -c https://169038-42372094-gh.circle-artifacts.com/0/tmp/artifacts/packages poseidon-trident
-```
-
-or on Linux:
-```{bash}
-conda install -c https://169039-42372094-gh.circle-artifacts.com/0/tmp/artifacts/packages poseidon-trident
-```
-
-_Note for mybinder.org_: If you're on mybinder, you can open a terminal and update trident from there.
