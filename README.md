@@ -10,3 +10,6 @@ A repository with data, articles and practical sessions to explore PCA, MDS, Str
 * `data/`: A folder which contains the raw data to start analyses from, such as PLINK datasets or other datasets required for the analyses. The large files in this folder (such as `.bim` and `.bed` files) are tracked via `git lfs`, which is available for up to dozens of GB on the MPCDF gitlab instance
 * `notebooks/`: A folder with Jupyter notebooks for the practical sessions.
 
+# Use practicals interactively on mybinder:
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/stschiff/exp_dat_reading_group_2021/HEAD)
