@@ -1,6 +1,6 @@
 # You can use this file to create a conda environment for this pipeline:
 #   conda env create -f environment.yml
-name: PCA_session_2
+name: PCA_and_friends
 channels:
   - conda-forge
   - bioconda
@@ -10,7 +10,9 @@ dependencies:
   - conda-forge::r-tidyverse=1.3.1=r40hc72bb7e_0
   - bioconda::eigensoft=7.2.1
   - bioconda::poseidon-trident
+  - bioconda::plink
   - conda-forge::jupyter=1.0.0
+  - conda-forge::jupyterlab
   - conda-forge::r-irkernel=1.2
   - conda-forge::rpy2=3.4.5=py37r40h238668a_0
   - conda-forge::r-remotes=2.4.0=r40hc72bb7e_0
