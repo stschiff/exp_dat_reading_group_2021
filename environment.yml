@@ -17,4 +17,5 @@ dependencies:
   - conda-forge::rpy2=3.4.5=py37r40h238668a_0
   - conda-forge::r-remotes=2.4.0=r40hc72bb7e_0
   - conda-forge::r-gridextra=2.3=r40hc72bb7e_1003
-  
+  - conda-forge::pandas=1.3.3=py37h5b83a90_0
+  - conda-forge::numpy=1.21.2=py37haefe36b_0
