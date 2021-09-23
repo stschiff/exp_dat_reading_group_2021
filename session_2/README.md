@@ -8,4 +8,4 @@ There are two notebooks:
 
 [2.2: PCA with smartPCA](2_2_smartpca.ipynb)
 
-2_3: MDS with Plink (in preparation)
+[2_3: MDS with Plink](2_3_plink.ipynb)
