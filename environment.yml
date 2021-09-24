@@ -9,11 +9,12 @@ dependencies:
   - conda-forge::python=3.7.10
   - conda-forge::r-tidyverse=1.3.1=r40hc72bb7e_0
   - bioconda::eigensoft=7.2.1
-  - bioconda::poseidon-trident
-  - bioconda::plink
+  - bioconda::poseidon-trident=0.21.0=h452e1f2_0
+  - bioconda::plink=1.90b6.21=hb4d813b_1
   - conda-forge::jupyter=1.0.0
   - conda-forge::jupyterlab
   - conda-forge::r-irkernel=1.2
+  - conda-forge::r-essentials=4.0=r40hd8ed1ab_2002
   - conda-forge::rpy2=3.4.5=py37r40h238668a_0
   - conda-forge::r-remotes=2.4.0=r40hc72bb7e_0
   - conda-forge::r-gridextra=2.3=r40hc72bb7e_1003
