@@ -9,8 +9,8 @@ dependencies:
   - conda-forge::python=3.7.10
   - conda-forge::r-tidyverse=1.3.1=r40hc72bb7e_0
   - bioconda::eigensoft=7.2.1
-  - bioconda::poseidon-trident=0.21.0=h452e1f2_0
-  - bioconda::plink=1.90b6.21=hb4d813b_1
+  - bioconda::poseidon-trident
+  - bioconda::plink=1.90b6.21
   - conda-forge::jupyter=1.0.0
   - conda-forge::jupyterlab
   - conda-forge::r-irkernel=1.2
