@@ -20,8 +20,8 @@
 ### Session 3: Missing data and projection
 - Date: Oct 1, 2021
 - Presenters: Luca, Thiseas
-- Reading: Meisner et al. 2021
-- Reading: Agrawal et al. 2020
+- Reading: Meisner, Jonas, Siyang Liu, Mingxi Huang, and Anders Albrechtsen. 2021. “Large-Scale Inference of Population Structure in Presence of Missingness Using PCA.” Bioinformatics , January. https://doi.org/10.1093/bioinformatics/btab027.
+- Reading: Agrawal, Aman, Alec M. Chiu, Minh Le, Eran Halperin, and Sriram Sankararaman. 2020. “Scalable Probabilistic PCA for Large-Scale Genetic Variation Data.” PLoS Genetics 16 (5): e1008773.
 
 ### Session 4 (Practical): How to deal with missing data
 - Date: Oct 8, 2021
