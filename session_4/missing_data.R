@@ -110,8 +110,6 @@ plot_tidy_pca_density(pnf_tidy)
 
 ####
 
-pnf_matrix
-
 shoot_holes <- function(x, prop) {
   nr_cells <- prod(dim(x))
   holes <- sample(seq_len(nr_cells), size = round(prop * nr_cells))
@@ -131,24 +129,22 @@ patch_holes_mean <- function(x) {
 patch_holes_mean(pengu_perforated) %>% 
   prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
 
-fits <- softImpute::softImpute(pengu_perforated, type="svd")
-softImpute::complete(pengu_perforated, fits) %>%
-  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
+# fits <- softImpute::softImpute(pengu_perforated, type="svd")
+# pnf_matrix %>% shoot_holes(pnf_matrix, 0.2) %>%
+#   softImpute::complete(pengu_perforated, fits) %>%
+#   prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
 
-missMethods::impute_EM(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
+explore_filling_method <- function(x, f, destruction_level) {
+  x %>% shoot_holes(destruction_level) %>% f() %>%
+    prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
+}
 
-missMethods::impute_mean(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
+explore_filling_method(pnf_matrix, missMethods::impute_mean, 0.9)
+explore_filling_method(pnf_matrix, missMethods::impute_median, 0.5)
+explore_filling_method(pnf_matrix, missMethods::impute_mode, 0.2)
 
-missMethods::impute_median(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
-
-missMethods::impute_mode(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
-
-missMethods::impute_sRHD(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
+explore_filling_method(pnf_matrix, missMethods::impute_EM, 0.5)
+explore_filling_method(pnf_matrix, missMethods::impute_sRHD, 0.6)
 
 ####
 
