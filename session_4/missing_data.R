@@ -127,7 +127,7 @@ patch_holes_mean <- function(x) {
 }
 
 patch_holes_mean(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
+  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca_density()
 
 # fits <- softImpute::softImpute(pengu_perforated, type="svd")
 # pnf_matrix %>% shoot_holes(pnf_matrix, 0.2) %>%
@@ -136,15 +136,17 @@ patch_holes_mean(pengu_perforated) %>%
 
 explore_filling_method <- function(x, f, destruction_level) {
   x %>% shoot_holes(destruction_level) %>% f() %>%
-    prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
+    prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca_density()
 }
 
-explore_filling_method(pnf_matrix, missMethods::impute_mean, 0.9)
+explore_filling_method(pnf_matrix, missMethods::impute_mean, 0.5)
 explore_filling_method(pnf_matrix, missMethods::impute_median, 0.5)
 explore_filling_method(pnf_matrix, missMethods::impute_mode, 0.2)
 
 explore_filling_method(pnf_matrix, missMethods::impute_EM, 0.5)
-explore_filling_method(pnf_matrix, missMethods::impute_sRHD, 0.6)
+explore_filling_method(pnf_matrix, missMethods::impute_sRHD, 0.5)
+
+# Mean per penguin species would be much better, probably
 
 ####
 
