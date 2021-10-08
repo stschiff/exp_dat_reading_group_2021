@@ -7,7 +7,7 @@ library(magrittr)
 library(ggplot2)
 
 pengu <- palmerpenguins::penguins %>%
-  dplyr::mutate(id = seq_len(nrow(.)))
+  dplyr::mutate(id = seq_len(nrow(.)) %>% as.character())
 
 pnf <- pengu_na_filtered <- pengu %>%
   dplyr::filter(
@@ -28,56 +28,67 @@ pnf_matrix <- pengu_na_filtered %>%
   as.matrix()
 
 pnf_pca <- prcomp(pnf_matrix, scale. = T)
+#biplot(pnf_pca)
 
 ####
 
-biplot(pnf_pca)
-
-pnf_tidy_obs <- pnf_pca$x %>%
-  tibble::as_tibble() %>%
-  dplyr::mutate(
-    id = pnf$id,
-    type = "obs"
-  ) %>%
-  dplyr::left_join(
-    pengu, by = "id"
+tidy_pca_output <- function(x, ids = pnf$id, raw_input = pengu) {
+  pnf_tidy_obs <- x$x %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate(
+      id = ids,
+      type = "obs"
+    ) %>%
+    dplyr::left_join(
+      raw_input, by = "id"
+    )
+  pnf_tidy_vars <- x$rotation %>%
+    tibble::as_tibble(rownames = "id") %>%
+    dplyr::mutate(
+      type = "vars"
+    )
+  list(
+    obs = pnf_tidy_obs,
+    vars = pnf_tidy_vars
   )
+}
 
-pnf_tidy_vars <- pnf_pca$rotation %>%
-  tibble::as_tibble(rownames = "id") %>%
-  dplyr::mutate(
-    type = "vars"
-  )
+pnf_tidy <- tidy_pca_output(pnf_pca, pnf$id, pengu)
 
-p0 <- ggplot() +
-  geom_point(
-    data = pnf_tidy_obs,
+plot_tidy_pca_simple <- function(x) {
+  ggplot() + geom_point(
+    data = x$obs,
     mapping = aes(x = PC1, y = PC2, colour = species)
   )
+}
 
-# xdens <- cowplot::axis_canvas(p0, axis = "x") +
-#   geom_density(
-#     data = pnf_tidy_obs, 
-#     aes(x = PC1, fill = species),
-#     alpha = 0.7
-#   ) 
-# 
-# ydens <- cowplot::axis_canvas(p0, axis = "y", coord_flip = TRUE) +
-#   geom_density(
-#     data = pnf_tidy_obs, 
-#     aes(x = PC2, fill = species),
-#     alpha = 0.7
-#   ) + 
-#   coord_flip()
-# 
-# p1 <- cowplot::insert_xaxis_grob(p0, xdens, grid::unit(.2, "null"), position = "top")
-# p2 <- cowplot::insert_yaxis_grob(p1, ydens, grid::unit(.2, "null"), position = "right")
-# cowplot::ggdraw(p2)
+plot_tidy_pca_density <- function(x) {
+  p0 <- plot_tidy_pca_simple(x)
+  xdens <- cowplot::axis_canvas(p0, axis = "x") +
+    geom_density(
+      data = x$obs,
+      aes(x = PC1, fill = species),
+      alpha = 0.7
+    )
+  ydens <- cowplot::axis_canvas(p0, axis = "y", coord_flip = TRUE) +
+    geom_density(
+      data = x$obs,
+      aes(x = PC2, fill = species),
+      alpha = 0.7
+    ) +
+    coord_flip()
+  p1 <- cowplot::insert_xaxis_grob(p0, xdens, grid::unit(.2, "null"), position = "top")
+  p2 <- cowplot::insert_yaxis_grob(p1, ydens, grid::unit(.2, "null"), position = "right")
+  cowplot::ggdraw(p2)
+}
+
+plot_tidy_pca_simple(pnf_tidy)
+plot_tidy_pca_density(pnf_tidy)
 
 # pnf_tidy_obs_long <- pnf_tidy_obs %>%
 #   tidyr::pivot_longer(
 #     cols = c(
-#       "bill_length_mm", "bill_depth_mm", 
+#       "bill_length_mm", "bill_depth_mm",
 #       "flipper_length_mm", "body_mass_g"
 #     ),
 #     names_to = "var",
@@ -118,23 +129,29 @@ patch_holes_mean <- function(x) {
 }
 
 patch_holes_mean(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% biplot()
+  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
 
 fits <- softImpute::softImpute(pengu_perforated, type="svd")
 softImpute::complete(pengu_perforated, fits) %>%
-  prcomp(scale. = T) %>% biplot()
+  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
 
 missMethods::impute_EM(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% biplot()
+  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
 
 missMethods::impute_mean(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% biplot()
+  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
 
 missMethods::impute_median(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% biplot()
+  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
 
 missMethods::impute_mode(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% biplot()
+  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
 
 missMethods::impute_sRHD(pengu_perforated) %>% 
-  prcomp(scale. = T) %>% biplot()
+  prcomp(scale. = T) %>% tidy_pca_output() %>% plot_tidy_pca()
+
+####
+
+prcomp(scale. = T)
+scale(newdata, pca$center, pca$scale) %*% pca$rotation
+
