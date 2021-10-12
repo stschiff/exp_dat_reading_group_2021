@@ -1,6 +1,11 @@
 library(magrittr)
 
-pat <- poseidonR::read_janno("~/agora/published_data/2012_PattersonGenetics", validate = F)
+# download Patterson2012 genotype data with trident:
+# https://poseidon-framework.github.io/#/trident
+system("trident fetch -d poseidon_data -f \"*2012_PattersonGenetics*\"")
+
+# filter to a reasonable set of individuals
+pat <- poseidonR::read_janno("poseidon_data/2012_PattersonGenetics", validate = F)
 
 pat_filtered <- pat %>%
   dplyr::mutate(
@@ -13,76 +18,62 @@ pat_filtered <- pat %>%
     first_group_name
   ) %>%
   dplyr::filter(
-    dplyr::row_number() %in% c(1)#c(1, 2)
+    dplyr::row_number() == 1#%in% c(1, 2)
   )
-  
-pat_filtered$Individual_ID
 
+# write individual selection to a forgeFile
 tibble::tibble(
   ind = paste0("<", sort(pat_filtered$Individual_ID), ">")
 ) %>% 
   readr::write_delim(
-    file = "poseidon_ind_list.txt",
+    file = "poseidon_data/poseidon_ind_list.txt",
     delim = " ",
     col_names = FALSE
   )
 
-# trident forge -d ~/agora/published_data/2012_PattersonGenetics --forgeFile poseidon_ind_list.txt -o patterson -n patterson
+# forge a new package with only the selected individuals
+system("trident forge -d poseidon_data/2012_PattersonGenetics --forgeFile poseidon_data/poseidon_ind_list.txt -o poseidon_data/patterson -n patterson --eigenstrat")
 
-hu <- scan("patterson/patterson.geno", what = "character")[1:50000] %>%
+# read genotype data into a numeric matrix
+geno_matrix <- scan("poseidon_data/patterson/patterson.geno", what = "character") %>%
+  # only select the first X SNPs
+  magrittr::extract(1:50000) %>%
   strsplit("") %>%
   do.call(cbind, .) %>%
   apply(., 2, as.numeric)
 
-zu <- poseidonR::read_janno("patterson/")
-
-x <- prcomp(hu)
-
-y <- x$x %>%
+# prepare a useful subset of context information from the .janno file
+context_info <- poseidonR::read_janno("poseidon_data/patterson", validate = FALSE) %>%
   tibble::as_tibble() %>%
+  dplyr::select(Individual_ID, Group_Name, Country, Longitude, Latitude) %>%
   dplyr::mutate(
-    id = 1:54,
-    type = "obs"
-  ) %>%
-  cbind(zu)
-
-y2 <- y %>% dplyr::mutate(
-  makro_region = purrr::map_chr(Country, function(x) { country_hash[[x]] })
-)
-
-library(ggplot2)
-y2 %>%
-  ggplot() +
-  geom_point(
-    aes(x = PC1, y = PC2, colour = makro_region)
+    Group_Name = purrr::map_chr(.$Group_Name, function(x) { x[1]}),
+    Makro_Region = dplyr::case_when(
+      Country == "Pakistan" ~ "South Asia",
+      Country == "Congo" ~ "Sub-Saharan Africa",
+      Country == "Central African Republic" ~ "Sub-Saharan Africa",
+      Country == "France" ~ "Europe",
+      Country == "Papua New Guinea" ~ "South-East Asia",
+      Country == "Israel" ~ "Near East",
+      Country == "Italy" ~ "Europe",
+      Country == "Colombia" ~ "South America",
+      Country == "Cambodia" ~ "South-East Asia",
+      Country == "Japan" ~ "East Asia",
+      Country == "China" ~ "East Asia",
+      Country == "Great Britain" ~ "Europe",
+      Country == "Brazil" ~ "South America",
+      Country == "MeCountryico" ~ "Central America",
+      Country == "Russia" ~ "Russia",
+      Country == "Senegal" ~ "Sub-Saharan Africa",
+      Country == "Nigeria" ~ "Sub-Saharan Africa",
+      Country == "Namibia" ~ "Sub-Saharan Africa",
+      Country == "South Africa" ~ "Sub-Saharan Africa",
+      Country == "Angola" ~ "Sub-Saharan Africa",
+      Country == "Algeria" ~ "North Africa",
+      Country == "Kenya" ~ "Sub-Saharan Africa"
+    )
   )
 
-country_hash <- tibble::tribble(
-  ~country, ~makro_region,
-  "Pakistan" , "South Asia",
-  "Congo" , "Sub-Saharan Africa",
-  "Central African Republic" , "Sub-Saharan Africa",
-  "France", "Europe",
-  "Papua New Guinea" , "South-East Asia",
-  "Israel" , "Near East",
-  "Italy", "Europe",
-  "Colombia", "South America",
-  "Cambodia", "South-East Asia",
-  "Japan", "East Asia",
-  "China", "East Asia",
-  "Great Britain", "Europe",
-  "Brazil", "South America",
-  "Mexico", "Central America",
-  "Russia", "Russia",
-  "Senegal", "Sub-Saharan Africa",
-  "Nigeria", "Sub-Saharan Africa",
-  "Namibia", "Sub-Saharan Africa",
-  "South Africa", "Sub-Saharan Africa",
-  "Angola", "Sub-Saharan Africa",
-  "Algeria", "North Africa",
-  "Kenya", "Sub-Saharan Africa"
-) %>% hash::hash(
-  keys = .$country,
-  values = .$makro_region
-)
-
+# write data to files
+write.table(geno_matrix, "geno_matrix.txt", col.names = F, row.names = F, sep = "")
+write.table(context_info, "context_info.csv", row.names = F, sep = ",")

@@ -1,3 +1,8 @@
+geno_matrix2 <- scan("geno_matrix.txt", what = "character") %>%
+  strsplit("") %>%
+  do.call(rbind, .) %>%
+  apply(., 2, as.numeric)
+
 # install dependencies
 packages <- c("tidyverse", "palmerpenguins", "cowplot", "softImpute", "missMethods", "norm", "mvtnorm")
 missing_packages <- packages[!packages %in% utils::installed.packages()]
