@@ -100,7 +100,7 @@ plot_tidy_pca_simple <- function(x) {suppressWarnings({
         data = x %>% dplyr::filter(projected == 'projected'),
         mapping = aes(x = PC1, y = PC2, frame = downsample),
         size = 1,
-        color='black'
+        color='red'
       )
   }
   p
