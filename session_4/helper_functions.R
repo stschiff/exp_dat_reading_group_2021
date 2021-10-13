@@ -49,8 +49,7 @@ shoot_holes <- function(x, prop) {
 tidy_pca_output <- function(x, context = context_info) {
   pnf_tidy_obs <- x$x %>%
     tibble::as_tibble() %>%
-    dplyr::bind_cols(context) %>%
-    dplyr::mutate(type = "obs", id = Group_Name)
+    dplyr::bind_cols(context)
 
   ## rotate to give it all the same orientation
   j_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Japanese') %>% dplyr::select(PC1)
@@ -70,7 +69,7 @@ tidy_pca_output <- function(x, context = context_info) {
 
 #####
 
-plot_tidy_pca_simple <- function(x) {suppressWarnings({
+plot_tidy_pca_simple <- function(x, text_geom = geom_text) {suppressWarnings({
   if (!"downsample" %in% colnames(x)) {
     x$downsample <- NA
   }
@@ -80,7 +79,7 @@ plot_tidy_pca_simple <- function(x) {suppressWarnings({
       mapping = aes(x = PC1, y = PC2, colour = Makro_Region, frame = downsample),
       size = 3
     ) +
-    geom_text(
+    text_geom(
       data = x,
       mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = downsample),
       size = 3
@@ -106,8 +105,8 @@ plot_tidy_pca_simple <- function(x) {suppressWarnings({
   p
 })}
 
-plot_tidy_pca_density <- function(x) {
-  p0 <- plot_tidy_pca_simple(x)
+plot_tidy_pca_density <- function(x, text_geom = geom_text) {
+  p0 <- plot_tidy_pca_simple(x, text_geom)
   xdens <- cowplot::axis_canvas(p0, axis = "x") +
     geom_density(
       data = x,

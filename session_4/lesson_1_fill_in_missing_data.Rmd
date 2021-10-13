@@ -58,10 +58,10 @@ geno_matrix <- scan("geno_matrix_one.txt", what = "character") %>%
 This large matrix fills contains more than 2 million entries and requires about 20mb of memory. Nevertheless we can still conveniently and interactively work with it in R. It features `r nrow(geno_matrix)` rows, one for each individual, and one column for each of the `r ncol(geno_matrix)` SNPs. Each cell has either the value 0, 1 or 2 and -- although this is technically discrete data -- we'll treat it as continuously scaled.
 
 ```{r}
-table(geno_matrix)
+#table(geno_matrix)
 ```
 
-### running PCA
+### Running PCA
 
 To explore this complex dataset we can run PCA on it, e.g. with `stats::prcomp()`:
 
@@ -89,8 +89,45 @@ pov_df <- tibble::tibble(pc = as.factor(1:10), pov = pov[1:10])
 pov_df %>% ggplot() + geom_bar(aes(pc, pov), stat = "identity")
 ```
 
-The variable loadings (`$rotation`) can be explored individually (though it's a bit tedious tens of thousands of SNPs) or used for projection (see lesson 2).
+The variable loadings (`$rotation`) can be explored individually (though it's a bit tedious for tens of thousands of SNPs) or used for projection (see lesson 2).
 
 The output coordinates (`$x`) finally are most immediately useful to plot a "genetic map". 
+
+```{r}
+pca$x %>% 
+  as.data.frame() %>%
+  ggplot() +
+  geom_point(aes(PC1, PC2))
+```
+
+This alone is of doubtful usefulness, as we can't really interpret a random, unlabelled point cloud. We have to add meaningful context information. Fortunately we already have this available in the `context_info` object` and can combine the two.
+
+```{r}
+pca_tidy_obs <- pca$x %>%
+  tibble::as_tibble() %>%
+  dplyr::bind_cols(context_info)
+
+pca_tidy_obs[c(1,2,(ncol(pca_tidy_obs)-5):ncol(pca_tidy_obs))]
+```
+
+With this context information, the PCA plot can be made a lot more informative and useful.
+
+```{r}
+pca_tidy_obs %>% 
+  ggplot() +
+  geom_point(aes(PC1, PC2, color = Makro_Region))
+```
+
+We automated the described data preparation and plotting operations with a number of helper functions in a supplementary script file. They also include a plotting function, that adds marginal kernel density plots to our default figure.
+
+```{r}
+source("helper_functions.R")
+
+prcomp(geno_matrix) %>%
+  tidy_pca_output() %>%
+  plot_tidy_pca_density(ggrepel::geom_text_repel)
+```
+
+### Missing data
 
 ...
