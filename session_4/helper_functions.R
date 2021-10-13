@@ -71,7 +71,7 @@ tidy_pca_output <- function(x, context = context_info) {
 
 plot_tidy_pca_simple <- function(x, text_geom = geom_text) {suppressWarnings({
   if (!"downsample" %in% colnames(x)) {
-    x$downsample <- NA
+    x$downsample <- 0
   }
   p <- ggplot() + 
     geom_point(
