@@ -1,3 +1,7 @@
+packages <- c("tidyverse", "remotes")
+Map(function(x) { install.packages(x) }, packages[!packages %in% utils::installed.packages()])
+remotes::install_github("poseidon-framework/poseidonR")
+
 library(magrittr)
 
 # download Patterson2012 genotype data with trident:
@@ -13,66 +17,66 @@ pat_filtered <- pat %>%
   ) %>%
   dplyr::filter(
     !grepl("Ignore", first_group_name)
-  ) %>%
-  dplyr::group_by(
-    first_group_name
-  ) %>%
-  dplyr::filter(
-    dplyr::row_number() == 1#%in% c(1, 2)
-  )
+  ) 
 
-# write individual selection to a forgeFile
-tibble::tibble(
-  ind = paste0("<", sort(pat_filtered$Individual_ID), ">")
-) %>% 
+one_individual_per_group <- pat_filtered %>%
+  dplyr::group_by(first_group_name) %>%
+  dplyr::filter(dplyr::row_number() == 1) %>%
+  
+
+three_individuals_per_group <- pat_filtered %>%
+  dplyr::group_by(first_group_name) %>%
+  dplyr::filter(dplyr::row_number() %in% 1:3)
+
+# write individual selections to a forgeFiles
+tibble::tibble(ind = paste0("<", sort(one_individual_per_group$Individual_ID), ">")) %>% 
   readr::write_delim(
-    file = "poseidon_data/poseidon_ind_list.txt",
+    file = "poseidon_data/ind_list_one_individual_per_group.txt",
     delim = " ",
     col_names = FALSE
   )
 
-# forge a new package with only the selected individuals
-system("trident forge -d poseidon_data/2012_PattersonGenetics --forgeFile poseidon_data/poseidon_ind_list.txt -o poseidon_data/patterson -n patterson --eigenstrat")
+tibble::tibble(ind = paste0("<", sort(three_individuals_per_group$Individual_ID), ">")) %>% 
+  readr::write_delim(
+    file = "poseidon_data/ind_list_three_individuals_per_group.txt",
+    delim = " ",
+    col_names = FALSE
+  )
 
-# read genotype data into a numeric matrix
-geno_matrix <- scan("poseidon_data/patterson/patterson.geno", what = "character") %>%
+# forge new packages with only the selected individuals
+system("trident forge -d poseidon_data/2012_PattersonGenetics --forgeFile poseidon_data/ind_list_one_individual_per_group.txt -o poseidon_data/patterson_one_individual_per_group -n one --eigenstrat")
+
+system("trident forge -d poseidon_data/2012_PattersonGenetics --forgeFile poseidon_data/ind_list_three_individuals_per_group.txt -o poseidon_data/patterson_three_individuals_per_group -n three --eigenstrat")
+
+# read genotype data into numeric matrices
+to_matrix <- function(x) {
+  x %>%
   # only select the first X SNPs
   magrittr::extract(1:50000) %>%
-  strsplit("") %>%
-  do.call(cbind, .) %>%
-  apply(., 2, as.numeric)
+    strsplit("") %>%
+    t() %>%
+    purrr::map(as.numeric) %>%
+    purrr::discard(function(x){any(x == 9)}) %>%
+    do.call(cbind, .)
+}
 
-# prepare a useful subset of context information from the .janno file
-context_info <- poseidonR::read_janno("poseidon_data/patterson", validate = FALSE) %>%
+geno_matrix_one <- scan(
+    "poseidon_data/patterson_one_individual_per_group/one.geno", 
+    what = "character"
+  ) %>% to_matrix()
+
+geno_matrix_three <- scan(
+  "poseidon_data/patterson_three_individuals_per_group/three.geno", 
+  what = "character"
+) %>% to_matrix()
+
+# prepare a useful subset of context information from the .janno files
+prep_context <- function(x) {
+  x %>%
   tibble::as_tibble() %>%
   dplyr::select(Individual_ID, Group_Name, Country, Longitude, Latitude) %>%
   dplyr::mutate(
     Group_Name = purrr::map_chr(.$Group_Name, function(x) { x[1]}),
-    # Makro_Region = dplyr::case_when(
-    #   Country == "Pakistan" ~ "South Asia",
-    #   Country == "Congo" ~ "Sub-Saharan Africa",
-    #   Country == "Central African Republic" ~ "Sub-Saharan Africa",
-    #   Country == "France" ~ "Europe",
-    #   Country == "Papua New Guinea" ~ "South-East Asia",
-    #   Country == "Israel" ~ "Near East",
-    #   Country == "Italy" ~ "Europe",
-    #   Country == "Colombia" ~ "South America",
-    #   Country == "Cambodia" ~ "South-East Asia",
-    #   Country == "Japan" ~ "East Asia",
-    #   Country == "China" ~ "East Asia",
-    #   Country == "Great Britain" ~ "Europe",
-    #   Country == "Brazil" ~ "South America",
-    #   Country == "MeCountryico" ~ "Central America",
-    #   Country == "Russia" ~ "Russia",
-    #   Country == "Senegal" ~ "Sub-Saharan Africa",
-    #   Country == "Nigeria" ~ "Sub-Saharan Africa",
-    #   Country == "Namibia" ~ "Sub-Saharan Africa",
-    #   Country == "South Africa" ~ "Sub-Saharan Africa",
-    #   Country == "Angola" ~ "Sub-Saharan Africa",
-    #   Country == "Algeria" ~ "North Africa",
-    #   Country == "Kenya" ~ "Sub-Saharan Africa",
-    #   Country == "Mexico" ~ "Central America"
-    # )
     Makro_Region = dplyr::case_when(
       Country == "Pakistan" ~ "South Asia",
       Country == "Congo" ~ "Africa",
@@ -99,7 +103,14 @@ context_info <- poseidonR::read_janno("poseidon_data/patterson", validate = FALS
       Country == "Mexico" ~ "Americas"
     )
   )
+}
+
+context_info_one <- poseidonR::read_janno("poseidon_data/patterson_one_individual_per_group", validate = FALSE) %>% prep_context()
+
+context_info_three <- poseidonR::read_janno("poseidon_data/patterson_three_individuals_per_group", validate = FALSE) %>% prep_context()
 
 # write data to files
-write.table(geno_matrix, "geno_matrix.txt", col.names = F, row.names = F, sep = "")
-write.table(context_info, "context_info.csv", row.names = F, sep = ",")
+write.table(geno_matrix_one, "geno_matrix_one.txt", col.names = F, row.names = F, sep = "")
+write.table(context_info_one, "context_info_one.csv", row.names = F, sep = ",")
+write.table(geno_matrix_three, "geno_matrix_three.txt", col.names = F, row.names = F, sep = "")
+write.table(context_info_three, "context_info_three.csv", row.names = F, sep = ",")
