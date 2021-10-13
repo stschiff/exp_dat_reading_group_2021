@@ -13,7 +13,7 @@ geno_matrix <- scan("geno_matrix.txt", what = "character") %>%
 
 context_info <- readr::read_csv("context_info.csv")
 
-####
+###### 
 
 tidy_pca_output <- function(x, context = context_info) {
   pnf_tidy_obs <- x$x %>%
@@ -23,14 +23,32 @@ tidy_pca_output <- function(x, context = context_info) {
   pnf_tidy_vars <- x$rotation %>%
     tibble::as_tibble(rownames = "id") %>%
     dplyr::mutate(type = "vars")
-  list(
+
+  pnf_tidy <- list(
     obs = pnf_tidy_obs,
     vars = pnf_tidy_vars
   )
+  
+  ## rotate to give it all the same orientation
+  j_pc1 <- pnf_tidy$obs %>% dplyr::filter(Group_Name == 'Japanese') %>% dplyr::select(PC1)
+  m_pc1 <- pnf_tidy$obs %>% dplyr::filter(Group_Name == 'Mbuti') %>% dplyr::select(PC1)
+  cat(as.numeric(j_pc1), as.numeric(m_pc1), '\n')
+  if (m_pc1 > j_pc1) pnf_tidy$obs <- pnf_tidy$obs %>% dplyr::mutate(PC1 = -PC1)
+  
+  ## rotate to give it all the same orientation
+  j_pc2 <- pnf_tidy$obs %>% dplyr::filter(Group_Name == 'Japanese') %>% dplyr::select(PC2)
+  s_pc2 <- pnf_tidy$obs %>% dplyr::filter(Group_Name == 'Sardinian') %>% dplyr::select(PC2)
+  cat(as.numeric(j_pc2), as.numeric(s_pc2), '\n')
+  if (s_pc2 > j_pc2) pnf_tidy$obs <- pnf_tidy$obs %>% dplyr::mutate(PC2 = -PC2)
+  
+  pnf_tidy
 }
+# explore_filling_method(geno_matrix, missMethods::impute_mean, 0.2)
+
+#####
 
 plot_tidy_pca_simple <- function(x) {
-  ggplot() + 
+  p <- ggplot() + 
     geom_point(
       data = x$obs,
       mapping = aes(x = PC1, y = PC2, colour = Makro_Region),
@@ -41,7 +59,21 @@ plot_tidy_pca_simple <- function(x) {
       mapping = aes(x = PC1, y = PC2, label = Group_Name),
       size = 3
     )
+  if ('projected' %in% colnames(x$obs)) {
+    # cat('labeling projected samples')
+    p <- p +
+      geom_point(
+        data = x$obs %>% dplyr::filter(projected == 'projected'),
+        mapping = aes(x = PC1, y = PC2),
+        size = 1,
+        color='black'
+      )
+  }
+  p
 }
+# plot_tidy_pca_simple(pnf_tidy_drop_ind)
+
+#####
 
 plot_tidy_pca_density <- function(x) {
   p0 <- plot_tidy_pca_simple(x)
@@ -128,12 +160,116 @@ explore_filling_method(geno_matrix, missMethods::impute_median, 0.2)
 explore_filling_method(geno_matrix, missMethods::impute_mode, 0.2)
 
 explore_filling_method(geno_matrix, missMethods::impute_EM, 0.2)
-explore_filling_method(geno_matrix, missMethods::impute_sRHD, 0.2)
+explore_filling_method(geno_matrix, missMethods::impute_sRHD, 0.3)
 
 # Mean per penguin species would be much better, probably
 
-####
 
-prcomp(scale. = T)
-scale(newdata, pca$center, pca$scale) %*% pca$rotation
 
+######  
+## fuck around w/ projecting data
+
+# prcomp(scale. = T)
+# scale(newdata, pca$center, pca$scale) %*% pca$rotation
+
+project_downsampled_inds <- function(x, destruction_level, drop_groups = c('Papuan', 'Russian'), context = context_info) {
+  drop_ind <- which(context$Group_Name %in% drop_groups)
+  
+  ## get data for "dropped inds"
+  geno_matrix_drop_ind <- x[drop_ind,] %>% shoot_holes(destruction_level)
+  dim(geno_matrix_drop_ind)
+  print(geno_matrix_drop_ind[1:2, 1:10])
+  context_info_drop_ind <- context %>% dplyr::filter(Group_Name %in% drop_groups)
+  context_info_drop_ind$projected <- 'projected'
+  
+  ## get data for rest
+  geno_matrix_rest <- x[-drop_ind,]
+  dim(geno_matrix_rest)
+  context_info_rest <- context %>% dplyr::filter(!Group_Name %in% drop_groups)
+  context_info_rest$projected <- 'pca'
+
+  ## do pca for inds that are not downsampled
+  pca_rest <- prcomp(geno_matrix_rest)
+  
+  for (ind in 1:nrow(geno_matrix_drop_ind)) {
+    cat('projecting', ind, '\n')
+    keep_sites <- !is.na(geno_matrix_drop_ind[ind,])
+    pca_drop_ind <- scale(matrix(geno_matrix_drop_ind[ind, keep_sites], nrow = 1),
+                          pca_rest$center[keep_sites],
+                          pca_rest$scale) %*% pca_rest$rotation[keep_sites, ]
+    pca_drop_ind <- pca_drop_ind * length(keep_sites) / sum(keep_sites)
+    pca_rest$x <- rbind(pca_rest$x, pca_drop_ind)
+    context_info_rest <- rbind(context_info_rest, context_info_drop_ind[ind,])
+  }
+
+  ## clean up results
+  pnf_tidy_drop_ind <- tidy_pca_output(pca_rest, context_info_rest)
+  pnf_tidy_drop_ind$obs <- pnf_tidy_drop_ind$obs %>% dplyr::mutate(downsample = destruction_level)
+  pnf_tidy_drop_ind
+}
+
+hey <- project_downsampled_inds(geno_matrix, .2)
+plot_tidy_pca_density(hey)
+
+
+
+
+#######
+
+%>% plot_tidy_pca_density()
+
+######
+
+
+plot_tidy_pca_density(pnf_tidy_drop_ind)
+
+
+# install.packages('gganimate')
+library(gganimate)
+library(plotly)
+
+##########
+
+hey <- project_downsampled_inds(geno_matrix, 0)
+for (ds in c(seq(.5, .9, .1), seq(.91, .99, .003))) {
+  hey1 <- project_downsampled_inds(geno_matrix, ds)
+  hey$obs <- rbind(hey$obs, hey1$obs)
+}
+# hey1$vars <- rbind(hey1$vars, hey2$vars)
+# plot_tidy_pca_density(hey1)
+
+# plot_tidy_pca_density(hey1)
+
+#######
+
+plot_tidy_pca_simple2 <- function(x) {
+  p <- ggplot() + 
+    geom_point(
+      data = x$obs,
+      mapping = aes(x = PC1, y = PC2, colour = Makro_Region, frame = downsample),
+      size = 3
+    ) +
+    geom_text(
+      data = x$obs,
+      mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = downsample),
+      size = 3
+    ) +
+    # geom_text(label='hey', x = 0, y = 0) +
+  NULL
+  if ('projected' %in% colnames(x$obs)) {
+    # cat('labeling projected samples')
+    p <- p +
+      geom_point(
+        data = x$obs %>% dplyr::filter(projected == 'projected'),
+        mapping = aes(x = PC1, y = PC2, frame = downsample),
+        size = 1,
+        color='black'
+      )
+  }
+  p
+}
+# plot_tidy_pca_simple(pnf_tidy_drop_ind)
+
+
+
+ggplotly(plot_tidy_pca_simple2(hey))
