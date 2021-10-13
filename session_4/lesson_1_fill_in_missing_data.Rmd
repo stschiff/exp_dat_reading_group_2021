@@ -1,0 +1,66 @@
+---
+title: "Lesson 1: Fill in missing data"
+author: "Clemens Schmid"
+date: "10/13/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Missing data
+
+Missing information is one of the core challenges for working with ancient DNA data. Here we want to explore its effect on PCA.
+
+### Dependencies
+
+This analysis relies on a number of R packages. You can install them with the following command:
+
+```{r,results=F}
+packages <- c("tidyverse", "cowplot", "softImpute", "missMethods", "norm", "mvtnorm", "ggrepel")
+Map(function(x) { install.packages(x) }, packages[!packages %in% utils::installed.packages()])
+```
+
+```{r}
+library(magrittr)
+library(ggplot2)
+```
+
+### Dataset
+
+We prepared a simplified genotype dataset, which should allow you to explore the effect of missingness in the (familiar?) environment of world-wide population history. It contains one individual each from about 50 populations from around the world. The `context_info` table holds some minimal context information.
+
+```{r}
+context_info <- readr::read_csv("context_info_one.csv")
+context_info
+```
+
+```{r,warning=FALSE}
+world <- map_data("world")
+ggplot() +
+  geom_map(data = world, map = world, aes(long, lat, map_id = region)) +
+  geom_point(data = context_info, aes(Longitude, Latitude, colour = Makro_Region), size = 3) +
+  coord_fixed()
+```
+
+For each individual we extracted the same <50000 non-missing SNPs from the HumanOrigins SNP array (Patterson 2012). They are available in a large `geno_matrix` text filem wehich can be loaded with
+
+```{r}
+geno_matrix <- scan("geno_matrix_one.txt", what = "character") %>%
+  strsplit("") %>%
+  do.call(rbind, .) %>%
+  apply(., 2, as.numeric)
+```
+
+This large matrix fills contains more than 2 million entries and requires about 20mb of memory. Nevertheless we can still conveniently and interactively work with it in R. It features `r nrow(geno_matrix)` rows, one for each individual, and one column for each of the `r ncol(geno_matrix)` SNPs. Each cell has either the value 0, 1 or 2 and -- although this is technically discrete data -- we'll treat it as continuously scaled.
+
+```{r}
+table(geno_matrix)
+```
+
+### running PCA
+
+...
