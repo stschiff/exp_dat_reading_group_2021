@@ -1,4 +1,44 @@
-project_downsampled_inds <- function(x, destruction_level, drop_groups = c('Papuan', 'Russian'), context = context_info) {
+project_downsampled_inds <- function(x, destruction_level, drop_groups = c('Papuan', 'Russian'), context = context_info, pca_rest = NULL, ret.pca_rest = F) {
+  drop_ind <- which(context$Group_Name %in% drop_groups)
+  
+  ## get data for "dropped inds"
+  geno_matrix_drop_ind <- x[drop_ind,] %>% shoot_holes(destruction_level)
+  dim(geno_matrix_drop_ind)
+  # print(geno_matrix_drop_ind[1:2, 1:10])
+  context_info_drop_ind <- context %>% dplyr::filter(Group_Name %in% drop_groups)
+  context_info_drop_ind$projected <- 'projected'
+  
+  ## get data for rest
+  geno_matrix_rest <- x[-drop_ind,]
+  dim(geno_matrix_rest)
+  context_info_rest <- context %>% dplyr::filter(!Group_Name %in% drop_groups)
+  context_info_rest$projected <- 'pca'
+  
+  ## do pca for inds that are not downsampled
+  if (is.null(pca_rest)) {
+    pca_rest <- prcomp(geno_matrix_rest)
+    ## allow the function to just return the pca for non-downsampled inds, which is static
+    if (ret.pca_rest) return(pca_rest)
+  }
+  
+  for (ind in 1:nrow(geno_matrix_drop_ind)) {
+    # cat('projecting', ind, '\n')
+    keep_sites <- !is.na(geno_matrix_drop_ind[ind,])
+    pca_drop_ind <- scale(matrix(geno_matrix_drop_ind[ind, keep_sites], nrow = 1),
+                          pca_rest$center[keep_sites],
+                          pca_rest$scale) %*% pca_rest$rotation[keep_sites, ]
+    pca_drop_ind <- pca_drop_ind * length(keep_sites) / sum(keep_sites)
+    pca_rest$x <- rbind(pca_rest$x, pca_drop_ind)
+    context_info_rest <- rbind(context_info_rest, context_info_drop_ind[ind,])
+  }
+  
+  ## clean up results
+  pnf_tidy_drop_ind <- tidy_pca_output(pca_rest, context_info_rest)
+  pnf_tidy_drop_ind <- pnf_tidy_drop_ind %>% dplyr::mutate(downsample = destruction_level)
+  pnf_tidy_drop_ind
+}
+
+project_downsampled_inds2 <- function(x, destruction_level, drop_groups = c('Papuan', 'Russian'), context = context_info) {
   drop_ind <- which(context$Group_Name %in% drop_groups)
   
   ## get data for "dropped inds"
@@ -71,22 +111,25 @@ tidy_pca_output <- function(x, context = context_info) {
 
 plot_tidy_pca_simple <- function(x, text_geom = geom_text) {suppressWarnings({
   if (!"downsample" %in% colnames(x)) {
-    x$downsample <- NA
+    x$downsample <- 0.0
+  }
+  if (!"iter" %in% colnames(x)) {
+    x$iter <- NA
   }
   p <- ggplot() + 
     geom_point(
       data = x,
-      mapping = aes(x = PC1, y = PC2, colour = Makro_Region, frame = downsample),
+      mapping = aes(x = PC1, y = PC2, colour = Makro_Region, frame = iter),
       size = 3
     ) +
     text_geom(
       data = x,
-      mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = downsample),
+      mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = iter),
       size = 3
     ) +
     geom_text(
-      data = x %>% dplyr::mutate(PC1 = min(PC1), PC2 = min(PC2)) %>% dplyr::group_by(downsample) %>% dplyr::sample_n(1),
-      mapping = aes(x = PC1, y = PC2, label = sprintf('Remove %g%%', downsample*100), frame = downsample),
+      data = x %>% dplyr::mutate(PC1 = min(PC1), PC2 = min(PC2)) %>% dplyr::group_by(iter) %>% dplyr::sample_n(1),
+      mapping = aes(x = PC1, y = PC2, label = sprintf('Remove %g%%', downsample*100), frame = iter),
       size = 5,
       hjust = -1
     ) +
@@ -97,7 +140,7 @@ plot_tidy_pca_simple <- function(x, text_geom = geom_text) {suppressWarnings({
     p <- p +
       geom_point(
         data = x %>% dplyr::filter(projected == 'projected'),
-        mapping = aes(x = PC1, y = PC2, frame = downsample),
+        mapping = aes(x = PC1, y = PC2, frame = iter),
         size = 1,
         color='red'
       )
