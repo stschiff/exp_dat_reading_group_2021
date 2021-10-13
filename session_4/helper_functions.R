@@ -95,13 +95,13 @@ tidy_pca_output <- function(x, context = context_info) {
   j_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Japanese') %>% dplyr::select(PC1)
   m_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Mbuti') %>% dplyr::select(PC1)
   # cat(as.numeric(j_pc1), as.numeric(m_pc1), '\n')
-  if (m_pc1 > j_pc1) pnf_tidy_obs <-pnf_tidy_obs %>% dplyr::mutate(PC1 = -PC1)
+  if (m_pc1[1,] > j_pc1[1,]) pnf_tidy_obs <-pnf_tidy_obs %>% dplyr::mutate(PC1 = -PC1)
   
   ## rotate to give it all the same orientation
   j_pc2 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Japanese') %>% dplyr::select(PC2)
   s_pc2 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Sardinian') %>% dplyr::select(PC2)
   # cat(as.numeric(j_pc2), as.numeric(s_pc2), '\n')
-  if (s_pc2 > j_pc2) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC2 = -PC2)
+  if (s_pc2[1,] > j_pc2[1,]) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC2 = -PC2)
   
   pnf_tidy_obs
 }
@@ -109,7 +109,9 @@ tidy_pca_output <- function(x, context = context_info) {
 
 #####
 
-plot_tidy_pca_simple <- function(x, text_geom = geom_text) {suppressWarnings({
+## use.labels can be all or projected
+
+plot_tidy_pca_simple <- function(x, text_geom = geom_text, use.labels = 'all') {suppressWarnings({
   if (!"downsample" %in% colnames(x)) {
     x$downsample <- 0.0
   }
@@ -122,11 +124,6 @@ plot_tidy_pca_simple <- function(x, text_geom = geom_text) {suppressWarnings({
       mapping = aes(x = PC1, y = PC2, colour = Makro_Region, frame = iter),
       size = 3
     ) +
-    text_geom(
-      data = x,
-      mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = iter),
-      size = 3
-    ) +
     geom_text(
       data = x %>% dplyr::mutate(PC1 = min(PC1), PC2 = min(PC2)) %>% dplyr::group_by(iter) %>% dplyr::sample_n(1),
       mapping = aes(x = -Inf, y = -Inf, label = sprintf('Remove %g%%', downsample*100), frame = iter),
@@ -135,6 +132,22 @@ plot_tidy_pca_simple <- function(x, text_geom = geom_text) {suppressWarnings({
     ) +
     # geom_text(label='hey', x = 0, y = 0) +
     NULL
+  if (use.labels == 'all') {
+    p <- p + 
+      text_geom(
+        data = x,
+        mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = iter),
+        size = 3
+      ) 
+  }
+  if (use.labels == 'projected') {
+    p <- p + 
+      text_geom(
+        data = x %>% dplyr::filter(projected == 'projected'),
+        mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = iter),
+        size = 3
+      ) 
+  }
   if ('projected' %in% colnames(x)) {
     # cat('labeling projected samples')
     p <- p +
