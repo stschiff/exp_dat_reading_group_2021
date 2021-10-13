@@ -21,8 +21,7 @@ pat_filtered <- pat %>%
 
 one_individual_per_group <- pat_filtered %>%
   dplyr::group_by(first_group_name) %>%
-  dplyr::filter(dplyr::row_number() == 1) %>%
-  
+  dplyr::filter(dplyr::row_number() == 1)
 
 three_individuals_per_group <- pat_filtered %>%
   dplyr::group_by(first_group_name) %>%
