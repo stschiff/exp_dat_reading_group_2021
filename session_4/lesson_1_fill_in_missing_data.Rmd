@@ -63,4 +63,34 @@ table(geno_matrix)
 
 ### running PCA
 
+To explore this complex dataset we can run PCA on it, e.g. with `stats::prcomp()`:
+
+```{r}
+pca <- prcomp(geno_matrix)
+```
+
+The output object of this function is a complex beast.
+
+```{r}
+str(pca)
+```
+
+Though most of the time we're only interested in three fields for concrete applications:
+
+- `$sdev`: standard deviations of the principal components
+- `$rotation`: the matrix of variable loadings
+- `$x`: the value of the rotated data, so our input observations coordinates in PCA space
+
+From the standard deviations (`$sdev`) we can calculate the proportions of variance covered by the individual principal components:
+
+```{r}
+pov <- pca$sdev^2/sum(pca$sdev^2)
+pov_df <- tibble::tibble(pc = as.factor(1:10), pov = pov[1:10])
+pov_df %>% ggplot() + geom_bar(aes(pc, pov), stat = "identity")
+```
+
+The variable loadings (`$rotation`) can be explored individually (though it's a bit tedious tens of thousands of SNPs) or used for projection (see lesson 2).
+
+The output coordinates (`$x`) finally are most immediately useful to plot a "genetic map". 
+
 ...
