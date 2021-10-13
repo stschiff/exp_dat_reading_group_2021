@@ -21,11 +21,13 @@ pat_filtered <- pat %>%
 
 one_individual_per_group <- pat_filtered %>%
   dplyr::group_by(first_group_name) %>%
-  dplyr::filter(dplyr::row_number() == 1)
+  dplyr::filter(dplyr::row_number() == 1) %>%
+  dplyr::ungroup()
 
 three_individuals_per_group <- pat_filtered %>%
   dplyr::group_by(first_group_name) %>%
-  dplyr::filter(dplyr::row_number() %in% 1:3)
+  dplyr::filter(dplyr::row_number() %in% 1:3) %>%
+  dplyr::ungroup()
 
 # write individual selections to a forgeFiles
 tibble::tibble(ind = paste0("<", sort(one_individual_per_group$Individual_ID), ">")) %>% 
