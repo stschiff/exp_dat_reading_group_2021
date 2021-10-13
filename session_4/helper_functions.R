@@ -129,9 +129,9 @@ plot_tidy_pca_simple <- function(x, text_geom = geom_text) {suppressWarnings({
     ) +
     geom_text(
       data = x %>% dplyr::mutate(PC1 = min(PC1), PC2 = min(PC2)) %>% dplyr::group_by(iter) %>% dplyr::sample_n(1),
-      mapping = aes(x = PC1, y = PC2, label = sprintf('Remove %g%%', downsample*100), frame = iter),
+      mapping = aes(x = -Inf, y = -Inf, label = sprintf('Remove %g%%', downsample*100), frame = iter),
       size = 5,
-      hjust = -1
+      vjust = -1.2, hjust = -0.1
     ) +
     # geom_text(label='hey', x = 0, y = 0) +
     NULL
