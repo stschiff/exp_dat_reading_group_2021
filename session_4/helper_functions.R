@@ -4,7 +4,7 @@ project_downsampled_inds <- function(x, destruction_level, drop_groups = c('Papu
   ## get data for "dropped inds"
   geno_matrix_drop_ind <- x[drop_ind,] %>% shoot_holes(destruction_level)
   dim(geno_matrix_drop_ind)
-  print(geno_matrix_drop_ind[1:2, 1:10])
+  # print(geno_matrix_drop_ind[1:2, 1:10])
   context_info_drop_ind <- context %>% dplyr::filter(Group_Name %in% drop_groups)
   context_info_drop_ind$projected <- 'projected'
   
@@ -18,7 +18,7 @@ project_downsampled_inds <- function(x, destruction_level, drop_groups = c('Papu
   pca_rest <- prcomp(geno_matrix_rest)
   
   for (ind in 1:nrow(geno_matrix_drop_ind)) {
-    cat('projecting', ind, '\n')
+    # cat('projecting', ind, '\n')
     keep_sites <- !is.na(geno_matrix_drop_ind[ind,])
     pca_drop_ind <- scale(matrix(geno_matrix_drop_ind[ind, keep_sites], nrow = 1),
                           pca_rest$center[keep_sites],
@@ -55,13 +55,13 @@ tidy_pca_output <- function(x, context = context_info) {
   ## rotate to give it all the same orientation
   j_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Japanese') %>% dplyr::select(PC1)
   m_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Mbuti') %>% dplyr::select(PC1)
-  cat(as.numeric(j_pc1), as.numeric(m_pc1), '\n')
+  # cat(as.numeric(j_pc1), as.numeric(m_pc1), '\n')
   if (m_pc1 > j_pc1) pnf_tidy_obs <-pnf_tidy_obs %>% dplyr::mutate(PC1 = -PC1)
   
   ## rotate to give it all the same orientation
   j_pc2 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Japanese') %>% dplyr::select(PC2)
   s_pc2 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Sardinian') %>% dplyr::select(PC2)
-  cat(as.numeric(j_pc2), as.numeric(s_pc2), '\n')
+  # cat(as.numeric(j_pc2), as.numeric(s_pc2), '\n')
   if (s_pc2 > j_pc2) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC2 = -PC2)
   
   pnf_tidy_obs
@@ -84,6 +84,12 @@ plot_tidy_pca_simple <- function(x) {suppressWarnings({
       data = x,
       mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = downsample),
       size = 3
+    ) +
+    geom_text(
+      data = x %>% dplyr::mutate(PC1 = min(PC1), PC2 = min(PC2)) %>% dplyr::group_by(downsample) %>% dplyr::sample_n(1),
+      mapping = aes(x = PC1, y = PC2, label = sprintf('Remove %g%%', downsample*100), frame = downsample),
+      size = 5,
+      hjust = -1
     ) +
     # geom_text(label='hey', x = 0, y = 0) +
     NULL
