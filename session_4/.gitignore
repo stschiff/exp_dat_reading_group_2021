@@ -46,3 +46,7 @@ po/*~
 
 # specific data
 poseidon_data/
+
+# rendered output
+*.html
+*.pdf
