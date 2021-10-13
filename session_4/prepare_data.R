@@ -95,6 +95,7 @@ prep_context <- function(x) {
       Country == "MeCountryico" ~ "Americas",
       Country == "Russia" ~ "Russia",
       Country == "Senegal" ~ "Africa",
+      Country == "BantuSA" ~ "Africa",
       Country == "Nigeria" ~ "Africa",
       Country == "Namibia" ~ "Africa",
       Country == "South Africa" ~ "Africa",
