@@ -1,11 +1,17 @@
 ---
 title: "R Notebook"
-output: html_notebook
-editor_options: 
+output:
+  html_document:
+    df_print: paged
+editor_options:
   chunk_output_type: console
 ---
 
 
+### Todo
+* make better section headings
+* add better descriptions
+* profit
 
 ```{r}
 # install dependencies
@@ -38,12 +44,12 @@ prcomp(geno_matrix) %>%
   dplyr::mutate(projected = 
                   dplyr::case_when(Group_Name %in% c('Papuan', 'Russian', 'Italian_North') ~ 'projected',
                                    TRUE ~ 'pca')) %>%
-  plot_tidy_pca_simple(use.labels = 'all') + ggtitle('PCA with all [Eurasian] individuals')
+  plot_tidy_pca_simple(use.labels = 'projected') + ggtitle('PCA with all [Eurasian] individuals')
 
 plot_tidy_pca_simple(project_downsampled_inds(geno_matrix, destruction_level = 0.0, 
                                               context = context_info,
                                               drop_groups = c('Papuan', 'Russian', 'Italian_North')),
-                     use.labels = 'all') + ggtitle('PCA with Papuan, Russian, Italian_North projected')
+                     use.labels = 'projected') + ggtitle('PCA with Papuan, Russian, Italian_North projected')
 
 ```
 
@@ -194,12 +200,13 @@ prcomp(geno_matrix_non_afr) %>%
   dplyr::mutate(projected = 
                   dplyr::case_when(Group_Name %in% c('Pathan', 'Russian', 'Italian_North') ~ 'projected',
                                    TRUE ~ 'pca')) %>%
-  plot_tidy_pca_simple(use.labels = 'all') + ggtitle('PCA with all [Eurasian] individuals')
+  plot_tidy_pca_simple(use.labels = 'projected') + ggtitle('PCA with all [Eurasian] individuals')
 
 plot_tidy_pca_simple(project_downsampled_inds(geno_matrix_non_afr, destruction_level = 0.0, 
                                               context = context_info_non_afr,
                                               drop_groups = c('Pathan', 'Russian', 'Italian_North')),
-                     use.labels = 'all') + ggtitle('PCA with Pathan, Russian, Italian_North projected')
+                     use.labels = 'projected') + 
+  ggtitle('PCA with Pathan, Russian, Italian_North projected')
 
 
 ```
