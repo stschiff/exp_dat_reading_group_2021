@@ -118,6 +118,8 @@ pca_tidy_obs %>%
   geom_point(aes(PC1, PC2, color = Makro_Region))
 ```
 
+[Let's discuss this plot!]
+
 We automated the described data preparation and plotting operations with a number of helper functions in a supplementary script file. They also include a plotting function, that adds marginal kernel density plots to our default figure.
 
 ```{r}
@@ -128,6 +130,47 @@ prcomp(geno_matrix) %>%
   plot_tidy_pca_density(ggrepel::geom_text_repel)
 ```
 
+[What do the axis density plots tell us?]
+
 ### Missing data
 
-...
+To explore the effect of missing data on the PCA plot, we can artificially modify our currently complete dataset. Figuratively we can "shoot holes" into it. Here's a simple  matrix:
+
+```{r}
+x <- matrix(1:9, nrow = 3, ncol = 3, byrow = T)
+x
+```
+
+We can poke holes into it with a function like this:
+
+```{r}
+# shoot_holes()
+prop <- 0.3 # desired percentage of missingness
+nr_holes <- round(prop * prod(dim(x)))
+holes <- sample(seq_along(x), size = nr_holes)
+x_Emmentaler <- x
+x_Emmentaler[holes] <- NA
+x_Emmentaler
+```
+
+This implementation has the issue, that it can accidentally wipe out entire columns. We want to avoid that for this experiment, so here's an alternative implementation that removes the same proportion of values from each column.
+
+```{r}
+# shoot_holes_column_wise()
+prop <- 0.3 # desired percentage of missingness
+nr_holes_per_column <- round((prop * prod(dim(x)))/ncol(x))
+x_Tilsit <- apply(x, 2, function(y) {
+  holes <- sample(seq_along(y), size = nr_holes_per_column)
+  y[holes] <- NA
+  y
+})
+x_Tilsit
+```
+
+Equipped like this we can start to poke holes into our genotype data and run PCA on it.
+
+```{r}
+shoot_holes_column_wise(geno_matrix, 0.3)
+```
+
+

@@ -104,6 +104,15 @@ shoot_holes <- function(x, prop) {
   return(x)
 }
 
+shoot_holes_column_wise <- function(x, prop) {
+  nr_holes_per_column <- round((prop * prod(dim(x)))/ncol(x))
+  apply(x, 2, function(y) {
+    holes <- sample(seq_along(y), size = nr_holes_per_column)
+    y[holes] <- NA
+    y
+  })
+}
+
 tidy_pca_output <- function(x, context = context_info) {
   pnf_tidy_obs <- x$x %>%
     tibble::as_tibble() %>%
