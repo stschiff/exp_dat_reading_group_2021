@@ -30,7 +30,7 @@ library(plotly)
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 8, fig.height = 6)
 
 
-setwd('~/Documents/exp_dat_reading_group_2021/session_4/')
+#setwd('~/Documents/exp_dat_reading_group_2021/session_4/')
 source('helper_functions.R')
 
 # load data
