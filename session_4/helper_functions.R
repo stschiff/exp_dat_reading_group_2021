@@ -1,3 +1,52 @@
+
+project_downsampled_inds_scale <- function(x, destruction_level, drop_groups = c('Papuan', 'Russian'), context = context_info, pca_rest = NULL, ret.pca_rest = F) {
+  drop_ind <- which(context$Group_Name %in% drop_groups)
+  
+  ## get data for "dropped inds"
+  geno_matrix_drop_ind <- x[drop_ind,] %>% shoot_holes(destruction_level)
+  dim(geno_matrix_drop_ind)
+  # print(geno_matrix_drop_ind[1:2, 1:10])
+  context_info_drop_ind <- context %>% dplyr::filter(Group_Name %in% drop_groups)
+  context_info_drop_ind$projected <- 'projected'
+  
+  ## get data for rest
+  geno_matrix_rest <- x[-drop_ind,]
+  dim(geno_matrix_rest)
+  context_info_rest <- context %>% dplyr::filter(!Group_Name %in% drop_groups)
+  context_info_rest$projected <- 'pca'
+  
+  ## do pca for inds that are not downsampled
+  if (is.null(pca_rest)) {
+    pca_rest <- prcomp(geno_matrix_rest[, colSums(geno_matrix_rest) > 0], scale. = T)
+    ## allow the function to just return the pca for non-downsampled inds, which is static
+    if (ret.pca_rest) return(pca_rest)
+  }
+  
+  for (ind in 1:nrow(geno_matrix_drop_ind)) {
+    cat('projecting', ind, '\n')
+    # print(dim(geno_matrix_drop_ind))
+    keep_sites <- !is.na(geno_matrix_drop_ind[ind,]) & colSums(geno_matrix_rest) > 0
+    keep_sites_scale <- !is.na(geno_matrix_drop_ind[ind,colSums(geno_matrix_rest) > 0])
+    # print(length(keep_sites))
+    # print(pca_rest$scale)
+    # print(length(pca_rest$scale))
+    pca_drop_ind <- scale(matrix(geno_matrix_drop_ind[ind, keep_sites], nrow = 1),
+                          pca_rest$center[keep_sites_scale],
+                          pca_rest$scale[keep_sites_scale]) %*% pca_rest$rotation[keep_sites_scale, ]
+    # print(pca_drop_ind[,1:5])
+    pca_drop_ind <- pca_drop_ind * length(keep_sites) / sum(keep_sites)
+    # print(pca_drop_ind[,1:5])
+    pca_rest$x <- rbind(pca_rest$x, pca_drop_ind)
+    context_info_rest <- rbind(context_info_rest, context_info_drop_ind[ind,])
+  }
+  
+  ## clean up results
+  pnf_tidy_drop_ind <- tidy_pca_output(pca_rest, context_info_rest)
+  pnf_tidy_drop_ind <- pnf_tidy_drop_ind %>% dplyr::mutate(downsample = destruction_level)
+  pnf_tidy_drop_ind
+}
+
+
 project_downsampled_inds <- function(x, destruction_level, drop_groups = c('Papuan', 'Russian'), context = context_info, pca_rest = NULL, ret.pca_rest = F) {
   drop_ind <- which(context$Group_Name %in% drop_groups)
   
@@ -21,16 +70,20 @@ project_downsampled_inds <- function(x, destruction_level, drop_groups = c('Papu
     if (ret.pca_rest) return(pca_rest)
   }
   
+  cat('projecting: ')
   for (ind in 1:nrow(geno_matrix_drop_ind)) {
-    # cat('projecting', ind, '\n')
+    cat(' ', ind)
     keep_sites <- !is.na(geno_matrix_drop_ind[ind,])
     pca_drop_ind <- scale(matrix(geno_matrix_drop_ind[ind, keep_sites], nrow = 1),
                           pca_rest$center[keep_sites],
                           pca_rest$scale) %*% pca_rest$rotation[keep_sites, ]
+    # print(pca_drop_ind[,1:5])
     pca_drop_ind <- pca_drop_ind * length(keep_sites) / sum(keep_sites)
+    # print(pca_drop_ind[,1:5])
     pca_rest$x <- rbind(pca_rest$x, pca_drop_ind)
     context_info_rest <- rbind(context_info_rest, context_info_drop_ind[ind,])
   }
+  cat(' done.\n')
   
   ## clean up results
   pnf_tidy_drop_ind <- tidy_pca_output(pca_rest, context_info_rest)
@@ -38,41 +91,6 @@ project_downsampled_inds <- function(x, destruction_level, drop_groups = c('Papu
   pnf_tidy_drop_ind
 }
 
-project_downsampled_inds2 <- function(x, destruction_level, drop_groups = c('Papuan', 'Russian'), context = context_info) {
-  drop_ind <- which(context$Group_Name %in% drop_groups)
-  
-  ## get data for "dropped inds"
-  geno_matrix_drop_ind <- x[drop_ind,] %>% shoot_holes(destruction_level)
-  dim(geno_matrix_drop_ind)
-  # print(geno_matrix_drop_ind[1:2, 1:10])
-  context_info_drop_ind <- context %>% dplyr::filter(Group_Name %in% drop_groups)
-  context_info_drop_ind$projected <- 'projected'
-  
-  ## get data for rest
-  geno_matrix_rest <- x[-drop_ind,]
-  dim(geno_matrix_rest)
-  context_info_rest <- context %>% dplyr::filter(!Group_Name %in% drop_groups)
-  context_info_rest$projected <- 'pca'
-  
-  ## do pca for inds that are not downsampled
-  pca_rest <- prcomp(geno_matrix_rest)
-  
-  for (ind in 1:nrow(geno_matrix_drop_ind)) {
-    # cat('projecting', ind, '\n')
-    keep_sites <- !is.na(geno_matrix_drop_ind[ind,])
-    pca_drop_ind <- scale(matrix(geno_matrix_drop_ind[ind, keep_sites], nrow = 1),
-                          pca_rest$center[keep_sites],
-                          pca_rest$scale) %*% pca_rest$rotation[keep_sites, ]
-    pca_drop_ind <- pca_drop_ind * length(keep_sites) / sum(keep_sites)
-    pca_rest$x <- rbind(pca_rest$x, pca_drop_ind)
-    context_info_rest <- rbind(context_info_rest, context_info_drop_ind[ind,])
-  }
-  
-  ## clean up results
-  pnf_tidy_drop_ind <- tidy_pca_output(pca_rest, context_info_rest)
-  pnf_tidy_drop_ind <- pnf_tidy_drop_ind %>% dplyr::mutate(downsample = destruction_level)
-  pnf_tidy_drop_ind
-}
 
 explore_filling_method <- function(x, f, destruction_level) {
   x %>% shoot_holes(destruction_level) %>% f() %>%
