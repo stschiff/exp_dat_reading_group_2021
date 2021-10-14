@@ -119,19 +119,22 @@ tidy_pca_output <- function(x, context = context_info) {
 
   ## rotate to give it all the same orientation
   j_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Japanese') %>% dplyr::select(PC1)
-  f_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'French') %>% dplyr::select(PC1)
   m_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Mbuti') %>% dplyr::select(PC1)
-  # cat(as.numeric(j_pc1), as.numeric(m_pc1), '\n')
-  # if (m_pc1[1,] > j_pc1[1,]) pnf_tidy_obs <-pnf_tidy_obs %>% dplyr::mutate(PC1 = -PC1)
-  if (0 > f_pc1[1,]) pnf_tidy_obs <-pnf_tidy_obs %>% dplyr::mutate(PC1 = -PC1)
+  f_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'French') %>% dplyr::select(PC1)
+  if (nrow(m_pc1) < 1) { 
+    if (0 > f_pc1[1,]) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC1 = -PC1)
+  } else {
+    if (m_pc1[1,] < j_pc1[1,]) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC1 = -PC1)
+  }
   
   ## rotate to give it all the same orientation
-  j_pc2 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Japanese') %>% dplyr::select(PC2)
   f_pc2 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'French') %>% dplyr::select(PC2)
-  s_pc2 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Sardinian') %>% dplyr::select(PC2)
-  # cat(as.numeric(j_pc2), as.numeric(s_pc2), '\n')
-  # if (s_pc2[1,] > j_pc2[1,]) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC2 = -PC2)
-  if (0 > f_pc2[1,]) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC2 = -PC2)
+  m_pc2 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Mbuti') %>% dplyr::select(PC2)
+  if (nrow(m_pc1) < 1) { 
+    if (0 > f_pc2[1,]) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC2 = -PC2)
+  } else {
+    if (m_pc2[1,] > f_pc2[1,]) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC2 = -PC2)
+  }
   
   pnf_tidy_obs
 }
@@ -141,7 +144,7 @@ tidy_pca_output <- function(x, context = context_info) {
 
 ## use.labels can be all or projected
 
-plot_tidy_pca_simple <- function(x, text_geom = geom_text, use.labels = 'all', ...) {suppressWarnings({
+plot_tidy_pca_simple <- function(x, text_geom = geom_text, use.labels = 'none', ...) {suppressWarnings({
   if (!"iter" %in% colnames(x)) {
     x$iter <- NA
   }
