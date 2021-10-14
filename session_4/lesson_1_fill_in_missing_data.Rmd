@@ -120,14 +120,18 @@ pca_tidy_obs %>%
 
 [Let's discuss this plot!]
 
-We automated the described data preparation and plotting operations with a number of helper functions in a supplementary script file. They also include a plotting function, that adds marginal kernel density plots to our default figure.
+We automated the described data preparation and plotting operations with a number of helper functions in a supplementary script file.
 
 ```{r}
 source("helper_functions.R")
 
 prcomp(geno_matrix) %>%
   tidy_pca_output() %>%
-  plot_tidy_pca_density(ggrepel::geom_text_repel)
+  plot_tidy_pca_simple(ggrepel::geom_text_repel, max.overlaps = Inf, use.labels = 'all')
+
+prcomp(geno_matrix) %>%
+  tidy_pca_output() %>%
+  plot_tidy_pca_density()
 ```
 
 [What do the axis density plots tell us?]
@@ -145,8 +149,8 @@ We can poke holes into it with a function like this:
 
 ```{r}
 # shoot_holes()
-prop <- 0.3 # desired percentage of missingness
-nr_holes <- round(prop * prod(dim(x)))
+destruction_level <- 0.3 # desired percentage of missingness
+nr_holes <- round(destruction_level * prod(dim(x)))
 holes <- sample(seq_along(x), size = nr_holes)
 x_Emmentaler <- x
 x_Emmentaler[holes] <- NA
@@ -157,8 +161,8 @@ This implementation has the issue, that it can accidentally wipe out entire colu
 
 ```{r}
 # shoot_holes_column_wise()
-prop <- 0.3 # desired percentage of missingness
-nr_holes_per_column <- round((prop * prod(dim(x)))/ncol(x))
+destruction_level <- 0.3 # desired percentage of missingness
+nr_holes_per_column <- round((destruction_level * prod(dim(x)))/ncol(x))
 x_Tilsit <- apply(x, 2, function(y) {
   holes <- sample(seq_along(y), size = nr_holes_per_column)
   y[holes] <- NA
@@ -169,7 +173,7 @@ x_Tilsit
 
 Equipped like this we can start to poke holes into our genotype data and run PCA on it.
 
-```{r}
+```{r,error=TRUE}
 geno_perforated <- shoot_holes_column_wise(geno_matrix, 0.3)
 prcomp(geno_perforated)
 ```
@@ -203,18 +207,61 @@ geno_matrix %>%
   patch_holes_mean() %>%
   prcomp(geno_matrix) %>%
   tidy_pca_output() %>%
-  plot_tidy_pca_simple(ggrepel::geom_text_repel, max.overlaps = Inf)
+  plot_tidy_pca_simple()
 ```
 
-[Compare the plot to the one without imputed data!]
+[Compare the plot to the one without imputed data]
 
-The R package `missingMethods` provides a number of imputation algorithms, including the following three for mean imputation: `impute_mean()`, `impute_median()`, and `impute_mode`. The first one should behave identically to our own implementation `patch_holes_mean()`. We can compare their effects:
+The R package `missingMethods` provides a number of imputation algorithms, including the following three for mean imputation: `impute_mean()`, `impute_median()`, and `impute_mode`. The first one should behave identically to our own implementation `patch_holes_mean()`. We can compare their effects with the helper function `explore_filling_method()`, which wraps the whole pipeline from the imputation to the plot.
 
 ```{r}
-geno_matrix %>% explore_filling_method(missMethods::impute_mean, 0.5)
+geno_matrix %>% explore_filling_method(missMethods::impute_mean, destruction_level = 0.5)
 geno_matrix %>% explore_filling_method(missMethods::impute_median, 0.5)
 geno_matrix %>% explore_filling_method(missMethods::impute_mode, 0.5)
 ```
 
+[Play with these functions and modify the `destruction_level` parameter]
 
+### Other imputation algorithms
 
+There are many different ("multiple") imputation algorithms. Here's just a selection of algorithms for imputation of numerical data that could be applied to genotype data (to my understanding). I tried running some of them, but the either the runtime was too long for this large dataset, or the run failed for one reason or the other (e.g. memory overflows).
+
+- `missMethods::impute_sRHD` (Simple random hot deck imputation)
+- `missMethods::impute_EM` (an EM imputation algorithm)
+- `softImpute::softImpute` (imputation with nuclear-norm regularization)
+- `mice::mice(method = 'pmm')` (Predictive Mean Matching)
+- `amelia::amelia` (another EM multiple imputation algorithm)
+- `missForest::missForest` (Nonparametric imputation using Random Forest)
+- `Hmisc::aregImpute` (Imputation using additive regression, bootstrapping, and predictive mean matching)
+- `mi::mi` (Imputation in an approximate Bayesian framework)
+
+```{r}
+geno_matrix %>% explore_filling_method(missMethods::impute_sRHD, destruction_level = 0.5)
+#geno_matrix %>% explore_filling_method(missForest::missForest, destruction_level = 0.1)
+```
+
+More research is urgently necessary.
+
+#### Imputation in classes
+
+All of these algorithms can be applied to meaningful subsets of data to leverage known context information. The missMethods package provides a useful helper function `impute_in_classes` for that.
+
+```{r}
+geno_matrix[,1:5000] %>% # reduced dataset for performance reasons
+  prcomp(geno_matrix) %>%
+  tidy_pca_output() %>%
+  plot_tidy_pca_simple()
+
+geno_matrix[,1:5000] %>%
+  shoot_holes_column_wise(0.5) %>%
+  as.data.frame() %>%
+  dplyr::mutate(Makro_Region = context_info$Makro_Region) %>%
+  missMethods::impute_in_classes(cols_class = "Makro_Region", missMethods::impute_mean) %>%
+  dplyr::select(-Makro_Region) %>%
+  as.matrix() %>%
+  prcomp(geno_matrix) %>%
+  tidy_pca_output() %>%
+  plot_tidy_pca_simple()
+```
+
+[Compare the output of these grouped mean imputation to the simple mean imputation attempted further up]
