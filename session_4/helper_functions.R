@@ -91,10 +91,9 @@ project_downsampled_inds <- function(x, destruction_level, drop_groups = c('Papu
   pnf_tidy_drop_ind
 }
 
-
 explore_filling_method <- function(x, f, destruction_level) {
-  x %>% shoot_holes(destruction_level) %>% f() %>%
-    prcomp() %>% tidy_pca_output() %>% plot_tidy_pca_density()
+  x %>% shoot_holes_column_wise(destruction_level) %>% f() %>%
+    prcomp() %>% tidy_pca_output() %>% plot_tidy_pca_simple()
 }
 
 shoot_holes <- function(x, prop) {
@@ -142,10 +141,7 @@ tidy_pca_output <- function(x, context = context_info) {
 
 ## use.labels can be all or projected
 
-plot_tidy_pca_simple <- function(x, text_geom = geom_text, use.labels = 'all') {suppressWarnings({
-  if (!"downsample" %in% colnames(x)) {
-    x$downsample <- 0.0
-  }
+plot_tidy_pca_simple <- function(x, text_geom = geom_text, use.labels = 'all', ...) {suppressWarnings({
   if (!"iter" %in% colnames(x)) {
     x$iter <- NA
   }
@@ -155,20 +151,22 @@ plot_tidy_pca_simple <- function(x, text_geom = geom_text, use.labels = 'all') {
       mapping = aes(x = PC1, y = PC2, colour = Makro_Region, frame = iter),
       size = 3
     ) +
-    geom_text(
+    NULL
+  if ("downsample" %in% colnames(x)) {
+    p <- p + geom_text(
       data = x %>% dplyr::mutate(PC1 = min(PC1), PC2 = min(PC2)) %>% dplyr::group_by(iter) %>% dplyr::sample_n(1),
       mapping = aes(x = PC1, y = PC2, label = sprintf('Remove %g%%', downsample*100), frame = iter),
       size = 5,
       vjust = -1.2, hjust = -0.1
-    ) +
-    # geom_text(label='hey', x = 0, y = 0) +
-    NULL
+    )
+  }
   if (use.labels == 'all') {
     p <- p + 
       text_geom(
         data = x,
         mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = iter),
-        size = 3
+        size = 3,
+        ...
       ) 
   }
   if (use.labels == 'projected') {
@@ -176,7 +174,8 @@ plot_tidy_pca_simple <- function(x, text_geom = geom_text, use.labels = 'all') {
       text_geom(
         data = x %>% dplyr::filter(projected == 'projected'),
         mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = iter),
-        size = 3
+        size = 3,
+        ...
       ) 
   }
   if ('projected' %in% colnames(x)) {

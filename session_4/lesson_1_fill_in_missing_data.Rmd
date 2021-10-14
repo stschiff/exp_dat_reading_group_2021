@@ -132,7 +132,7 @@ prcomp(geno_matrix) %>%
 
 [What do the axis density plots tell us?]
 
-### Missing data
+### Creating missing data
 
 To explore the effect of missing data on the PCA plot, we can artificially modify our currently complete dataset. Figuratively we can "shoot holes" into it. Here's a simple  matrix:
 
@@ -170,7 +170,51 @@ x_Tilsit
 Equipped like this we can start to poke holes into our genotype data and run PCA on it.
 
 ```{r}
-shoot_holes_column_wise(geno_matrix, 0.3)
+geno_perforated <- shoot_holes_column_wise(geno_matrix, 0.3)
+prcomp(geno_perforated)
 ```
+
+This yields a nasty error message. `stats::prcomp()` can not run with perforated input data. So we're forced to patch the holes.
+
+### Filling missing data
+
+There are multiple algorithms to consider here - as discussed in our meeting last week. 
+
+#### Mean imputation
+
+Mean imputation fills the missing values with the means of some observed values. We can write a column-wise mean imputation like this:
+
+```{r}
+patch_holes_mean <- function(x) {
+  apply(x, 2, function(y) { 
+    y[is.na(y)] <- mean(y, na.rm = T)
+    y
+  })
+}
+```
+
+... and then run it on our perforated dataset:
+
+```{r}
+set.seed(123)
+
+geno_matrix %>%
+  shoot_holes_column_wise(0.5) %>%
+  patch_holes_mean() %>%
+  prcomp(geno_matrix) %>%
+  tidy_pca_output() %>%
+  plot_tidy_pca_simple(ggrepel::geom_text_repel, max.overlaps = Inf)
+```
+
+[Compare the plot to the one without imputed data!]
+
+The R package `missingMethods` provides a number of imputation algorithms, including the following three for mean imputation: `impute_mean()`, `impute_median()`, and `impute_mode`. The first one should behave identically to our own implementation `patch_holes_mean()`. We can compare their effects:
+
+```{r}
+geno_matrix %>% explore_filling_method(missMethods::impute_mean, 0.5)
+geno_matrix %>% explore_filling_method(missMethods::impute_median, 0.5)
+geno_matrix %>% explore_filling_method(missMethods::impute_mode, 0.5)
+```
+
 
 
