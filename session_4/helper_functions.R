@@ -1,3 +1,4 @@
+# helper functions for the .Rmd files
 
 project_downsampled_inds_scale <- function(x, destruction_level, drop_groups = c('Papuan', 'Russian'), context = context_info, pca_rest = NULL, ret.pca_rest = F) {
   drop_ind <- which(context$Group_Name %in% drop_groups)
@@ -91,9 +92,9 @@ project_downsampled_inds <- function(x, destruction_level, drop_groups = c('Papu
   pnf_tidy_drop_ind
 }
 
-explore_filling_method <- function(x, f, destruction_level, ...) {
+explore_filling_method <- function(x, f, destruction_level, use.labels = 'none', ...) {
   x %>% shoot_holes_column_wise(destruction_level) %>% f(...) %>%
-    prcomp() %>% tidy_pca_output() %>% plot_tidy_pca_simple()
+    prcomp() %>% tidy_pca_output() %>% plot_tidy_pca_simple(use.labels = use.labels)
 }
 
 shoot_holes <- function(x, prop) {
@@ -212,4 +213,49 @@ plot_tidy_pca_density <- function(x, text_geom = geom_text) {
   p1 <- cowplot::insert_xaxis_grob(p0, xdens, grid::unit(.2, "null"), position = "top")
   p2 <- cowplot::insert_yaxis_grob(p1, ydens, grid::unit(.2, "null"), position = "right")
   cowplot::ggdraw(p2)
+}
+
+
+shinyImpute <- function() {
+  lookup_function <- function(x) {
+    switch(
+      x,
+      "mean" = missMethods::impute_mean,
+      "median" = missMethods::impute_median,
+      "mode" = missMethods::impute_mode,
+      "sRHD" = missMethods::impute_sRHD
+    )
+  }
+  ui <- shiny::fluidPage(    
+    shiny::sidebarLayout(      
+      shiny::sidebarPanel(
+        shiny::selectInput(
+          "impute_method", "Imputation method:", choices = c(
+            "mean", "median", "mode", "sRHD"
+          )
+        ),
+        shiny::numericInput(
+          "destruction_level", "Destruction level:", value = 0
+        ),
+        shiny::selectInput(
+          "labels", "Print labels:", choices = c(
+            "none", "all"
+          )
+        ),
+      ),
+      shiny::mainPanel(
+        shiny::plotOutput("myplot")  
+      )
+    )
+  )
+  server <- function(input, output) {
+    output$myplot <- shiny::renderPlot({
+      geno_matrix %>% explore_filling_method(
+        lookup_function(input$impute_method),
+        input$destruction_level,
+        use.labels = input$labels
+      )
+    })
+  }
+  shiny::shinyApp(ui = ui, server = server)
 }

@@ -20,7 +20,7 @@ Missing information is one of the core challenges for working with ancient DNA d
 This analysis relies on a number of R packages. You can install them with the following command:
 
 ```{r,results=F}
-packages <- c("tidyverse", "missMethods", "cowplot", "ggrepel")
+packages <- c("tidyverse", "missMethods", "cowplot", "ggrepel", "shiny")
 Map(function(x) { install.packages(x) }, packages[!packages %in% utils::installed.packages()])
 ```
 
@@ -135,7 +135,7 @@ prcomp(geno_matrix) %>%
   plot_tidy_pca_density()
 ```
 
-[Let's discuss these plots!]
+Let's discuss these plots!
 
 ### Creating missing data
 
@@ -215,7 +215,11 @@ geno_matrix %>% explore_filling_method(missMethods::impute_median, 0.5)
 geno_matrix %>% explore_filling_method(missMethods::impute_mode, 0.5)
 ```
 
-[Let's play with these functions. Do they differ? Modify the `destruction_level` parameter]
+Let's play with these functions. Do they differ? Modify the `destruction_level` parameter! You can also do so with this tiny shiny app:
+
+```{r,eval=FALSE}
+shinyImpute()
+```
 
 ### Other imputation algorithms
 
