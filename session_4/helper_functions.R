@@ -91,8 +91,8 @@ project_downsampled_inds <- function(x, destruction_level, drop_groups = c('Papu
   pnf_tidy_drop_ind
 }
 
-explore_filling_method <- function(x, f, destruction_level) {
-  x %>% shoot_holes_column_wise(destruction_level) %>% f() %>%
+explore_filling_method <- function(x, f, destruction_level, ...) {
+  x %>% shoot_holes_column_wise(destruction_level) %>% f(...) %>%
     prcomp() %>% tidy_pca_output() %>% plot_tidy_pca_simple()
 }
 

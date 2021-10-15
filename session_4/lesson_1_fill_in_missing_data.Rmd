@@ -20,20 +20,23 @@ Missing information is one of the core challenges for working with ancient DNA d
 This analysis relies on a number of R packages. You can install them with the following command:
 
 ```{r,results=F}
-packages <- c("tidyverse", "cowplot", "softImpute", "missMethods", "norm", "mvtnorm", "ggrepel")
+packages <- c("tidyverse", "missMethods", "cowplot", "ggrepel")
 Map(function(x) { install.packages(x) }, packages[!packages %in% utils::installed.packages()])
 ```
+
+We also have to load two packages and fix the seed for all random operations.
 
 ```{r}
 library(magrittr)
 library(ggplot2)
+set.seed(123)
 ```
 
 ### Dataset
 
-We prepared a simplified genotype dataset, which should allow you to explore the effect of missingness in the (familiar?) environment of world-wide population history. It contains one individual each from about 50 populations from around the world. The `context_info` table holds some minimal context information.
+We prepared a simplified genotype dataset, which should allow you to consider the effect of missingness in the (familiar?) environment of world-wide population structure. It contains one individual each from about 50 populations from around the world. The `context_info` table holds some minimal context information.
 
-```{r}
+```{r,message=F}
 context_info <- readr::read_csv("context_info_one.csv")
 context_info
 ```
@@ -46,7 +49,7 @@ ggplot() +
   coord_fixed()
 ```
 
-For each individual we extracted the same <50000 non-missing SNPs from the HumanOrigins SNP array (Patterson 2012). They are available in a large `geno_matrix` text filem wehich can be loaded with
+For each individual we extracted the same <50000 non-missing SNPs from the HumanOrigins SNP array ([Patterson 2012](https://doi.org/10.1534/genetics.112.145037)). They are available in a large `geno_matrix` text file, that can be loaded into R like this:
 
 ```{r}
 geno_matrix <- scan("geno_matrix_one.txt", what = "character") %>%
@@ -55,10 +58,10 @@ geno_matrix <- scan("geno_matrix_one.txt", what = "character") %>%
   apply(., 2, as.numeric)
 ```
 
-This large matrix fills contains more than 2 million entries and requires about 20mb of memory. Nevertheless we can still conveniently and interactively work with it in R. It features `r nrow(geno_matrix)` rows, one for each individual, and one column for each of the `r ncol(geno_matrix)` SNPs. Each cell has either the value 0, 1 or 2 and -- although this is technically discrete data -- we'll treat it as continuously scaled.
+This large matrix contains more than 2 million entries and requires about 20MB of memory. Nevertheless we can still conveniently and interactively work with it in R. It features `r nrow(geno_matrix)` rows, one for each individual, and one column for each of the `r ncol(geno_matrix)` SNPs. Each cell has either the value 0, 1 or 2 and -- although this is technically discrete data -- we'll treat it as continuously scaled.
 
 ```{r}
-#table(geno_matrix)
+str(geno_matrix)
 ```
 
 ### Running PCA
@@ -69,17 +72,17 @@ To explore this complex dataset we can run PCA on it, e.g. with `stats::prcomp()
 pca <- prcomp(geno_matrix)
 ```
 
-The output object of this function is a complex beast.
+Note how surprisingly fast the computation completes. The output object of this function is a complex beast, though.
 
 ```{r}
 str(pca)
 ```
 
-Though most of the time we're only interested in three fields for concrete applications:
+Fortunately, most of the time we're only interested in three fields for concrete applications:
 
 - `$sdev`: standard deviations of the principal components
 - `$rotation`: the matrix of variable loadings
-- `$x`: the value of the rotated data, so our input observations coordinates in PCA space
+- `$x`: the value of the rotated data (so: the coordinates of our input observations in PCA space)
 
 From the standard deviations (`$sdev`) we can calculate the proportions of variance covered by the individual principal components:
 
@@ -110,15 +113,13 @@ pca_tidy_obs <- pca$x %>%
 pca_tidy_obs[c(1,2,(ncol(pca_tidy_obs)-5):ncol(pca_tidy_obs))]
 ```
 
-With this context information, the PCA plot can be made a lot more informative and useful.
+With this context data, the PCA plot can be rendered a lot more informative and useful.
 
 ```{r}
-pca_tidy_obs %>% 
+pca_tidy_obs %>%
   ggplot() +
   geom_point(aes(PC1, PC2, color = Makro_Region))
 ```
-
-[Let's discuss this plot!]
 
 We automated the described data preparation and plotting operations with a number of helper functions in a supplementary script file.
 
@@ -134,11 +135,11 @@ prcomp(geno_matrix) %>%
   plot_tidy_pca_density()
 ```
 
-[What do the axis density plots tell us?]
+[Let's discuss these plots!]
 
 ### Creating missing data
 
-To explore the effect of missing data on the PCA plot, we can artificially modify our currently complete dataset. Figuratively we can "shoot holes" into it. Here's a simple  matrix:
+To explore the effect of missing data on the PCA plot, we can artificially modify our currently complete dataset. Figuratively we can "shoot holes" into it. Here's a simple matrix:
 
 ```{r}
 x <- matrix(1:9, nrow = 3, ncol = 3, byrow = T)
@@ -157,7 +158,7 @@ x_Emmentaler[holes] <- NA
 x_Emmentaler
 ```
 
-This implementation has the issue, that it can accidentally wipe out entire columns. We want to avoid that for this experiment, so here's an alternative implementation that removes the same proportion of values from each column.
+This implementation has one issue: it can accidentally wipe out entire columns. We want to avoid that for this experiment, so here's an alternative implementation that removes the same proportion of values from each column.
 
 ```{r}
 # shoot_holes_column_wise()
@@ -182,8 +183,6 @@ This yields a nasty error message. `stats::prcomp()` can not run with perforated
 
 ### Filling missing data
 
-There are multiple algorithms to consider here - as discussed in our meeting last week. 
-
 #### Mean imputation
 
 Mean imputation fills the missing values with the means of some observed values. We can write a column-wise mean imputation like this:
@@ -200,8 +199,6 @@ patch_holes_mean <- function(x) {
 ... and then run it on our perforated dataset:
 
 ```{r}
-set.seed(123)
-
 geno_matrix %>%
   shoot_holes_column_wise(0.5) %>%
   patch_holes_mean() %>%
@@ -210,9 +207,7 @@ geno_matrix %>%
   plot_tidy_pca_simple()
 ```
 
-[Compare the plot to the one without imputed data]
-
-The R package `missingMethods` provides a number of imputation algorithms, including the following three for mean imputation: `impute_mean()`, `impute_median()`, and `impute_mode`. The first one should behave identically to our own implementation `patch_holes_mean()`. We can compare their effects with the helper function `explore_filling_method()`, which wraps the whole pipeline from the imputation to the plot.
+The R package `missingMethods` provides a number of imputation algorithms, including the following three for mean imputation: `impute_mean()`, `impute_median()`, and `impute_mode`. The first one should behave identically to our own implementation `patch_holes_mean()`. We can compare their effects with the helper function `explore_filling_method()`, which wraps the whole pipeline from data, to imputation, to plot.
 
 ```{r}
 geno_matrix %>% explore_filling_method(missMethods::impute_mean, destruction_level = 0.5)
@@ -220,39 +215,50 @@ geno_matrix %>% explore_filling_method(missMethods::impute_median, 0.5)
 geno_matrix %>% explore_filling_method(missMethods::impute_mode, 0.5)
 ```
 
-[Play with these functions and modify the `destruction_level` parameter]
+[Let's play with these functions. Do they differ? Modify the `destruction_level` parameter]
 
 ### Other imputation algorithms
 
-There are many different ("multiple") imputation algorithms. Here's just a selection of algorithms for imputation of numerical data that could be applied to genotype data (to my understanding). I tried running some of them, but the either the runtime was too long for this large dataset, or the run failed for one reason or the other (e.g. memory overflows).
+There are many different imputation algorithms. Here's just a selection of them for imputation of numerical data that could be applied to genotype data (to my understanding). For large datasets some algorithms have exceedingly long runtimes and large memory requirements.
 
 - `missMethods::impute_sRHD` (Simple random hot deck imputation)
 - `missMethods::impute_EM` (an EM imputation algorithm)
-- `softImpute::softImpute` (imputation with nuclear-norm regularization)
-- `mice::mice(method = 'pmm')` (Predictive Mean Matching)
-- `amelia::amelia` (another EM multiple imputation algorithm)
+- `softImpute::softImpute` (Imputation with nuclear-norm regularization)
+- `mice::mice(method = 'pmm')` (Multivariate Imputation by Chained Equations: Predictive Mean Matching)
+- `Amelia::amelia` (another EM multiple imputation algorithm)
 - `missForest::missForest` (Nonparametric imputation using Random Forest)
 - `Hmisc::aregImpute` (Imputation using additive regression, bootstrapping, and predictive mean matching)
 - `mi::mi` (Imputation in an approximate Bayesian framework)
 
 ```{r}
-geno_matrix %>% explore_filling_method(missMethods::impute_sRHD, destruction_level = 0.5)
-#geno_matrix %>% explore_filling_method(missForest::missForest, destruction_level = 0.1)
-```
+geno_matrix_small <- geno_matrix[,1:2000] # reduced dataset for performance reasons
 
-More research is urgently necessary.
-
-#### Imputation in classes
-
-All of these algorithms can be applied to meaningful subsets of data to leverage known context information. The missMethods package provides a useful helper function `impute_in_classes` for that.
-
-```{r}
-geno_matrix[,1:5000] %>% # reduced dataset for performance reasons
+geno_matrix_small %>%
   prcomp(geno_matrix) %>%
   tidy_pca_output() %>%
   plot_tidy_pca_simple()
 
-geno_matrix[,1:5000] %>%
+geno_matrix_small %>% explore_filling_method(missMethods::impute_sRHD, destruction_level = 0.5)
+#geno_matrix_small %>% explore_filling_method(missMethods::impute_EM, destruction_level = 0.5)
+# high runtime and memory requirements
+#geno_matrix_small %>% explore_filling_method(softImpute::softImpute, destruction_level = 0.5)
+# fails with Error in colMeans(x, na.rm = TRUE) : 'x' must be numeric
+#geno_matrix_small %>% explore_filling_method(mice::mice, destruction_level = 0.5, method = 'pmm')
+# long runtime
+#geno_matrix_small %>% explore_filling_method(Amelia::amelia, destruction_level = 0.5)
+# fails with Amelia Error Code:  43, You have a variable in your dataset that does not vary.  Please remove this variable.
+#geno_matrix_small %>% explore_filling_method(missForest::missForest, destruction_level = 0.5)
+# long runtime
+```
+
+That was sobering.
+
+#### Imputation in classes
+
+Probably most (?) of these algorithms can be applied to meaningful subsets of data to leverage known context information. The missMethods package provides a useful helper function `impute_in_classes` for that.
+
+```{r}
+geno_matrix_small %>%
   shoot_holes_column_wise(0.5) %>%
   as.data.frame() %>%
   dplyr::mutate(Makro_Region = context_info$Makro_Region) %>%
@@ -264,4 +270,4 @@ geno_matrix[,1:5000] %>%
   plot_tidy_pca_simple()
 ```
 
-[Compare the output of these grouped mean imputation to the simple mean imputation attempted further up]
+Note the strong effect of group-wise imputation!
