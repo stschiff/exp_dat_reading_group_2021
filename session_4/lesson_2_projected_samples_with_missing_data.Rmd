@@ -1,0 +1,298 @@
+---
+title: "PCA Projection and Missing Data"
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+# PCA Projection and Missing Data
+
+### Todo
+* make better section headings
+* add better descriptions
+* profit
+
+### Load dataset and dependencies
+
+Here we're loading a genotype matrix with 159 individuals and ~30k SNPs. We selected three individuals from each Human Origins population.
+
+```{r}
+# install dependencies
+packages <- c("tidyverse", "cowplot", "softImpute", "missMethods", "norm", "mvtnorm", "ggrepel", "plotly", "magrittr")
+Map(function(x) { install.packages(x) }, packages[!packages %in% utils::installed.packages()])
+
+library(magrittr)
+library(ggplot2)
+library(plotly)
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 8, fig.height = 6)
+
+
+#setwd('~/Documents/exp_dat_reading_group_2021/session_4/')
+source('helper_functions.R')
+
+# load data
+geno_matrix <- scan("geno_matrix_three.txt", what = "character") %>%
+  strsplit("") %>%
+  do.call(rbind, .) %>%
+  apply(., 2, as.numeric)
+
+context_info <- readr::read_csv("context_info_three.csv")
+
+###### 
+
+```
+
+### Global PCAs
+
+Here we plot two PCAs - the first uses all 159 individuals. For the second plot, we remove 9 individuals (plotted with red dots and labels), and then project those individuals onto a PCA generated from the remaining 150 individuals. You can see that there is some shrinkage towards the origin.
+
+```{r}
+prcomp(geno_matrix) %>% 
+  tidy_pca_output(context = context_info) %>%
+  dplyr::mutate(projected = 
+                  dplyr::case_when(Group_Name %in% c('Papuan', 'Russian', 'Italian_North') ~ 'projected',
+                                   TRUE ~ 'pca')) %>%
+  plot_tidy_pca_simple(use.labels = 'projected') + ggtitle('PCA with all individuals')
+
+plot_tidy_pca_simple(project_downsampled_inds(geno_matrix, destruction_level = 0.0, 
+                                              context = context_info,
+                                              drop_groups = c('Papuan', 'Russian', 'Italian_North')),
+                     use.labels = 'projected') + ggtitle('PCA with Papuan, Russian, Italian_North projected')
+
+```
+
+### Downsample data from projected individuals
+
+First compute the static "background" PCA.
+
+```{r}
+pca_static <- 
+  project_downsampled_inds(geno_matrix, destruction_level = 0.0,
+                           drop_groups = c('Papuan', 'Russian'), ret.pca_rest = T)
+
+```
+
+#### Projections with three levels of downsampling
+
+```{r}
+pnf_tidy_drop_ind <- project_downsampled_inds(geno_matrix, destruction_level = 0.0,
+                                              drop_groups = c('Papuan', 'Russian'), 
+                                              pca_rest = pca_static)
+plot_tidy_pca_simple(pnf_tidy_drop_ind, use.labels = 'projected') +
+  ggtitle('Projecting Papuan + Russian', subtitle = '0% missing')
+
+pnf_tidy_drop_ind <- project_downsampled_inds(geno_matrix, destruction_level = 0.5,
+                                              drop_groups = c('Papuan', 'Russian'), 
+                                              pca_rest = pca_static)
+plot_tidy_pca_simple(pnf_tidy_drop_ind, use.labels = 'projected') +
+  ggtitle('Projecting Papuan + Russian', subtitle = '50% missing')
+
+pnf_tidy_drop_ind <- project_downsampled_inds(geno_matrix, destruction_level = 0.9, 
+                                              drop_groups = c('Papuan', 'Russian'), 
+                                              pca_rest = pca_static)
+plot_tidy_pca_simple(pnf_tidy_drop_ind, use.labels = 'projected') +
+  ggtitle('Projecting Papuan + Russian', subtitle = '90% missing')
+
+
+```
+
+#### Now try many different downsample values, to see the effects of extremely large amounts of missing data.
+
+```{r}
+
+## static PCA, to be used in each projection
+pca_static <- 
+  project_downsampled_inds(geno_matrix, destruction_level = 0.0,
+                           drop_groups = c('Papuan', 'Russian'), ret.pca_rest = T)
+
+## projection w/ no missing data
+pnf_tidy_drop_ind.mult <- 
+  project_downsampled_inds(geno_matrix, destruction_level = 0.0,
+                           drop_groups = c('Papuan', 'Russian'), pca_rest = pca_static)
+pnf_tidy_drop_ind.mult <- pnf_tidy_drop_ind.mult %>% dplyr::mutate(iter = 0)
+
+## projections with progressively more missing data
+cat('Downsampling:')
+iter = 1
+for (ds in c(seq(.5, .9, .1), seq(.91, .999, .003))) {
+  cat(' ', ds)
+  tmp1 <- project_downsampled_inds(geno_matrix, ds,
+                                   drop_groups = c('Papuan', 'Russian'), 
+                                   pca_rest = pca_static)
+  tmp1 <- tmp1 %>% dplyr::mutate(iter = iter)
+  pnf_tidy_drop_ind.mult <- rbind(pnf_tidy_drop_ind.mult, tmp1)
+  iter = iter + 1
+}
+cat('Done.\n')
+
+```
+
+Plot this with an animation, where you can scan through the amount of data removed.
+
+```{r}
+ggplotly(plot_tidy_pca_simple(pnf_tidy_drop_ind.mult, use.labels = 'projected'))
+```
+
+
+### Try to get better boundaries
+
+Here we do many iterations of the same amount of downsampling, to better observe the range of effects.
+
+
+```{r}
+## static PCA, to be used in each projection
+pca_static <- 
+  project_downsampled_inds(geno_matrix, destruction_level = 0.0, context = context_info,
+                           drop_groups = c('Papuan', 'Russian', 'Italian_North'), ret.pca_rest = T)
+
+## projection w/ no missing data
+pnf_tidy_drop_ind.mult.og <- 
+  project_downsampled_inds(geno_matrix, destruction_level = 0.0, context = context_info,
+                           drop_groups = c('Papuan', 'Russian', 'Italian_North'), 
+                           pca_rest = pca_static)
+pnf_tidy_drop_ind.mult <- pnf_tidy_drop_ind.mult.og %>% dplyr::mutate(iter = 0)
+
+## projections with progressively more missing data
+cat('Downsampling:')
+iter = 1
+for (ds in c(seq(.5, .9, .1), .95, .96, .97, .98, .99)) {
+  cat(' ', ds)
+  pnf_tidy_drop_ind.mult <- 
+    rbind(pnf_tidy_drop_ind.mult,
+          pnf_tidy_drop_ind.mult.og %>% dplyr::mutate(downsample = ds, iter = iter))
+  
+  for (x in seq(10)) {
+    tmp1 <- project_downsampled_inds(geno_matrix, ds, context = context_info,
+                                     drop_groups = c('Papuan', 'Russian', 'Italian_North'), 
+                                     pca_rest = pca_static)
+    tmp1 <- tmp1 %>% dplyr::filter(projected == 'projected')
+    tmp1 <- tmp1 %>% dplyr::mutate(iter = iter)
+    pnf_tidy_drop_ind.mult <- rbind(pnf_tidy_drop_ind.mult, tmp1)
+  }
+  iter = iter + 1
+}
+cat('Done.\n')
+
+```
+
+```{r}
+ggplotly(plot_tidy_pca_simple(pnf_tidy_drop_ind.mult, use.labels = 'projected'))
+
+```
+
+
+
+### non-African PCA
+
+It's possible that our dataset is not very susceptible to downsampling, due to the large amounts of variation present in the populations. Here we subset to just the non-African samples, and repeat some of the above experiments.
+
+#### Basic non-African PCA (with and without projection)
+
+```{r}
+
+## keep mostly non-Africans and non-Americas
+drop_ind <- which(context_info$Makro_Region %in% c('Africa', 'Americas') 
+                  | is.na(context_info$Makro_Region) 
+                  | context_info$Group_Name %in% c('Papuan','Nasioi','Tujia','','','',''))
+
+# ## keep mostly West and Central Eurasian
+# drop_ind <- which(context_info$Makro_Region %in% c('Africa', 'Americas', 'East Asia') 
+#                   | is.na(context_info$Makro_Region) 
+#                   | context_info$Group_Name %in% c('Papuan','Nasioi','Tujia','Uyghur','Hazara','Yakut',''))
+
+## get data for rest
+geno_matrix_non_afr <- geno_matrix[-drop_ind,]
+dim(geno_matrix_non_afr)
+
+## get context for rest
+context_info_non_afr <- context_info[-drop_ind,]
+dim(context_info_non_afr)
+# context_info_non_afr$projected <- 'pca'
+
+prcomp(geno_matrix_non_afr) %>% 
+  tidy_pca_output(context = context_info_non_afr) %>%
+  dplyr::mutate(projected = 
+                  dplyr::case_when(Group_Name %in% c('Pathan', 'Russian', 'Italian_North') ~ 'projected',
+                                   TRUE ~ 'pca')) %>%
+  plot_tidy_pca_simple(use.labels = 'projected') + ggtitle('PCA with all [Eurasian] individuals')
+
+plot_tidy_pca_simple(project_downsampled_inds(geno_matrix_non_afr, destruction_level = 0.0,
+                                              context = context_info_non_afr,
+                                              drop_groups = c('Pathan', 'Russian', 'Italian_North')),
+                     use.labels = 'projected') + 
+  ggtitle('PCA with Pathan, Russian, Italian_North projected')
+
+
+```
+
+
+#### Try many levels of downsampling
+
+```{r}
+## static PCA, to be used in each projection
+pca_static.small <- 
+  project_downsampled_inds(geno_matrix_non_afr, destruction_level = 0.0, context = context_info_non_afr,
+                           drop_groups = c('Pathan', 'Russian', 'Italian_North'), ret.pca_rest = T)
+
+## projection w/ no missing data
+pnf_tidy_drop_ind.mult.small <- 
+  project_downsampled_inds(geno_matrix_non_afr, destruction_level = 0.0, context = context_info_non_afr,
+                           drop_groups = c('Pathan', 'Russian', 'Italian_North'), 
+                           pca_rest = pca_static.small)
+pnf_tidy_drop_ind.mult.small <- pnf_tidy_drop_ind.mult.small %>% dplyr::mutate(iter = 0)
+
+## projections with progressively more missing data
+cat('Downsampling:')
+iter = 1
+for (ds in c(seq(.5, .9, .1), seq(.91, .999, .003))) {
+  cat(' ', ds)
+  tmp1 <- project_downsampled_inds(geno_matrix_non_afr, ds, context = context_info_non_afr,
+                                   drop_groups = c('Pathan', 'Russian', 'Italian_North'), 
+                                   pca_rest = pca_static.small)
+  tmp1 <- tmp1 %>% dplyr::mutate(iter = iter)
+  pnf_tidy_drop_ind.mult.small <- rbind(pnf_tidy_drop_ind.mult.small, tmp1)
+  iter = iter + 1
+}
+cat('Done.\n')
+
+```
+
+```{r}
+ggplotly(plot_tidy_pca_simple(pnf_tidy_drop_ind.mult.small, use.labels = 'projected'))
+
+```
+
+
+
+
+## Debug PCA shrinkage
+
+Ignore this
+
+```{r}
+tmp.pca_static.small.nodrops <- prcomp(geno_matrix_non_afr)
+
+## static PCA, to be used in each projection
+tmp.pca_static.small.drops <- 
+  project_downsampled_inds(geno_matrix_non_afr, destruction_level = 0.0, context = context_info_non_afr,
+                           drop_groups = c('Pathan', 'Russian', 'Italian_North'), ret.pca_rest = T)
+
+plot(tmp.pca_static.small.nodrops$rotation[, 1], tmp.pca_static.small.drops$rotation[, 1])
+plot(tmp.pca_static.small.nodrops$rotation[, 2], tmp.pca_static.small.drops$rotation[, 2])
+
+cor(tmp.pca_static.small.nodrops$rotation[, 1], tmp.pca_static.small.drops$rotation[, 1])
+cor(tmp.pca_static.small.nodrops$rotation[, 2], tmp.pca_static.small.drops$rotation[, 2])
+
+```
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
