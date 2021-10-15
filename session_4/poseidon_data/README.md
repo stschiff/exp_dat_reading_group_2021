@@ -1,0 +1,1 @@
+This directory exists to hold intermediate data produced by the `prepare_data.R` script
