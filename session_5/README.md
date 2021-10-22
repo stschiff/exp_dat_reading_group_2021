@@ -11,3 +11,7 @@ This command would take the eigenstrat data found in `tmp/test_eigen`, set 10% o
 
 The `--pops` argument selects individuals that match either in the "ind" column *or* the "population" column, so be careful.
 
+***
+
+To run the emu software discussed two sessions ago (Meisner et al. 2021), you can install the software from [here](https://github.com/rosemeis/emu) and run it on input PLINK data.
+
