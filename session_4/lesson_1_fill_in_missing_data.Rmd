@@ -265,12 +265,13 @@ p_softimpute
 
 
 ### Messy missingness
-The setup here is that we want missingess to vary by macro-region
+The setup here is that we want missingness to vary by macro-region
 ```{r}
 library(dplyr)
 df_missingness = context_info %>% select(Makro_Region) %>% distinct
-df_missingness$missing = seq(0.1, .9, length.out=7)
+df_missingness$missing = c(.2, .7, .3, .5, .2, .8, .6)
 context_missing = context_info %>% left_join(df_missingness) %>% mutate(missing=runif(54,missing-.1, missing+.1))
+head(context_missing)
 
 shoot_holes_by_sample <- function(x, n_missing){
   n_samples = nrow(x)
@@ -288,13 +289,25 @@ shoot_holes_by_sample <- function(x, n_missing){
 Y = geno_matrix %>%
    shoot_holes_by_sample(context_missing$missing) 
 
-p_meanimpute = Y %>%
+y_meanimpute = Y %>%
    patch_holes_mean %>%
    prcomp(geno_matrix) %>%
-   tidy_pca_output() %>%
+   tidy_pca_output(context_missing)
+p_meanimpute = y_meanimpute %>% 
    plot_tidy_pca_simple()
 p_meanimpute
 
+p_meanimpute2 =   y_meanimpute %>% 
+  ggplot() +
+  geom_text(
+    aes(x = PC1, y = PC2, colour = missing, label=substr(Makro_Region, 1,3 )),
+    size = 5
+  ) +
+  scale_color_viridis_c()
+p_meanimpute2
+```
+
+```{r}
 #compare to softimpute
 require(softImpute)
 y_softimpute = Y %>% scale(scale=F) %>% softImpute
@@ -302,6 +315,15 @@ y_softimpute$x = y_softimpute$u
 colnames(y_softimpute$x) = sprintf("PC%d", 1:ncol(y_softimpute$x))
 p_softimpute = y_softimpute %>% tidy_pca_output %>% plot_tidy_pca_simple()
 p_softimpute
+
+p_softimpute2 =   y_softimpute %>% tidy_pca_output(context=context_missing)%>% 
+  ggplot() +
+  geom_text(
+    aes(x = PC1, y = PC2, colour = missing, label=substr(Makro_Region, 1,3 )),
+    size = 5
+  ) +
+  scale_color_viridis_c()
+p_softimpute2
 ```
 
 
