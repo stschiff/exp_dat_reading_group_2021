@@ -248,6 +248,48 @@ p_softimpute = y_softimpute %>% tidy_pca_output %>% plot_tidy_pca_simple()
 p_softimpute
 ```
 
+
+### Messy missingness
+The setup here is that we want missingess to vary by macro-region
+```{r}
+library(dplyr)
+df_missingness = context_info %>% select(Makro_Region) %>% distinct
+df_missingness$missing = seq(0.1, .9, length.out=7)
+context_missing = context_info %>% left_join(df_missingness) %>% mutate(missing=runif(54,missing-.1, missing+.1))
+
+shoot_holes_by_sample <- function(x, n_missing){
+  n_samples = nrow(x)
+  n_snps = ncol(x)
+  n_missing = round(n_snps * n_missing)
+  for(i in 1:n_samples){
+    holes <- sample(seq(n_snps), size = n_missing[i])
+    x[i, holes] <- NA
+  }
+  x
+}
+```
+
+```{r}
+Y = geno_matrix %>%
+   shoot_holes_by_sample(context_missing$missing) 
+
+p_meanimpute = Y %>%
+   patch_holes_mean %>%
+   prcomp(geno_matrix) %>%
+   tidy_pca_output() %>%
+   plot_tidy_pca_simple()
+p_meanimpute
+
+#compare to softimpute
+require(softImpute)
+y_softimpute = Y %>% scale(scale=F) %>% softImpute
+y_softimpute$x = y_softimpute$u
+colnames(y_softimpute$x) = sprintf("PC%d", 1:ncol(y_softimpute$x))
+p_softimpute = y_softimpute %>% tidy_pca_output %>% plot_tidy_pca_simple()
+p_softimpute
+```
+
+
 ### Other imputation algorithms
 
 There are many different imputation algorithms. Here's just a selection of them for imputation of numerical data that could be applied to genotype data (to my understanding). For large datasets some algorithms have exceedingly long runtimes and large memory requirements.
