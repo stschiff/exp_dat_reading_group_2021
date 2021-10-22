@@ -34,16 +34,20 @@
   - EM-imputation
   - MDS-projection?
 
-### Session 5: Structure / Admixture
+### Session 5 (Practical): More on projection and PCA
 - Date: Oct 22, 2021
+- Goal: Try out various missing data techniques
+
+### Session 6: Structure / Admixture
+- Date: Oct 29, 2021
 - Presenters: Leonardo A., Ke
 - Reading: 
   - Pritchard et al. 2000
   - Alexander et al. 2009 (Admixture)
   - maybe some review (for example Falush "Badmixture")
     
-### Session 6 (Practical): How to run Admixture?
-- Date: Oct 29, 2021
+### Session 7 (Practical): How to run Admixture?
+- Date: Nov 5, 2021
 - Presenters: Sandra, Laura, Joscha
 - Tool: [ADMIXTURE](https://dalexander.github.io/admixture/download.html)
 - Tasks: Run admixture
@@ -52,14 +56,14 @@
     - PCA on Admixture components (?)
     - Dystruct?
 
-### Session 7: Foundational principles behind PCA/Admixture
-- Date: Oct 5, 2021
+### Session 8: Foundational principles behind PCA/Admixture
+- Date: Nov 12, 2021
 - Presenters: Stephan, Federica, Alba
 - Reading: Engelhardt and Stephens, “Analysis of Population Structure.”
 - Reading: McVean 2009
 
-### Session 8 (Practical): Simulations / predictions
-- Date: Nov 12, 2021
+### Session 9 (Practical): Simulations / predictions
+- Date: Nov 19, 2021
 - Presenters: Leonardo I., Arev
 - Tool: [msprime](https://tskit.dev/msprime/docs/stable/intro.html)
 - Tasks 
