@@ -113,6 +113,165 @@ shoot_holes_column_wise <- function(x, prop) {
   })
 }
 
+shoot_holes_column_wise_nonunif <- function(x, prop_min, prop_max) {
+  n_samples = nrow(x)
+  n_snps = ncol(x)
+  n_holes_per_column_min <- round(prop_min * n_snps)
+  n_holes_per_column_max <- round(prop_max * n_snps)
+  n_missing = round(n_snps * runif(n_samples, prop_min, prop_max))
+  for(i in 1:n_samples){
+    holes <- sample(seq(n_snps), size = n_missing[i])
+    x[i, holes] <- NA
+  }
+  x
+}
+
+tidy_pca_output <- function(x, context = context_info) {
+  pnf_tidy_obs <- x$x %>%
+    tibble::as_tibble() %>%
+    dplyr::bind_cols(context)
+
+  ## rotate to give it all the same orientation
+  j_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Japanese') %>% dplyr::select(PC1)
+  m_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Mbuti') %>% dplyr::select(PC1)
+  f_pc1 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'French') %>% dplyr::select(PC1)
+  if (nrow(m_pc1) < 1) { 
+    if (0 > f_pc1[1,]) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC1 = -PC1)
+  } else {
+    if (m_pc1[1,] < j_pc1[1,]) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC1 = -PC1)
+  }
+  
+  ## rotate to give it all the same orientation
+  f_pc2 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'French') %>% dplyr::select(PC2)
+  m_pc2 <- pnf_tidy_obs %>% dplyr::filter(Group_Name == 'Mbuti') %>% dplyr::select(PC2)
+  if (nrow(m_pc1) < 1) { 
+    if (0 > f_pc2[1,]) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC2 = -PC2)
+  } else {
+    if (m_pc2[1,] > f_pc2[1,]) pnf_tidy_obs <- pnf_tidy_obs %>% dplyr::mutate(PC2 = -PC2)
+  }
+  
+  pnf_tidy_obs
+}
+# explore_filling_method(geno_matrix, missMethods::impute_mean, 0.2)
+
+#####
+
+## use.labels can be all or projected
+
+plot_tidy_pca_simple <- function(x, text_geom = geom_text, use.labels = 'none', ...) {suppressWarnings({
+  if (!"iter" %in% colnames(x)) {
+    x$iter <- NA
+  }
+  p <- ggplot() + 
+    geom_point(
+      data = x,
+      mapping = aes(x = PC1, y = PC2, colour = Makro_Region, frame = iter),
+      size = 3
+    ) +
+    NULL
+  if ("downsample" %in% colnames(x)) {
+    p <- p + geom_text(
+      data = x %>% dplyr::mutate(PC1 = min(PC1), PC2 = min(PC2)) %>% dplyr::group_by(iter) %>% dplyr::sample_n(1),
+      mapping = aes(x = PC1, y = PC2, label = sprintf('Remove %g%%', downsample*100), frame = iter),
+      size = 5,
+      vjust = -1.2, hjust = -0.1
+    )
+  }
+  if (use.labels == 'all') {
+    p <- p + 
+      text_geom(
+        data = x,
+        mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = iter),
+        size = 3,
+        ...
+      ) 
+  }
+  if (use.labels == 'projected') {
+    p <- p + 
+      text_geom(
+        data = x %>% dplyr::filter(projected == 'projected'),
+        mapping = aes(x = PC1, y = PC2, label = Group_Name, frame = iter),
+        size = 3,
+        ...
+      ) 
+  }
+  if ('projected' %in% colnames(x)) {
+    # cat('labeling projected samples')
+    p <- p +
+      geom_point(
+        data = x %>% dplyr::filter(projected == 'projected'),
+        mapping = aes(x = PC1, y = PC2, frame = iter),
+        size = 1,
+        color='red'
+      )
+  }
+  p
+})}
+
+plot_tidy_pca_density <- function(x, text_geom = geom_text) {
+  p0 <- plot_tidy_pca_simple(x, text_geom)
+  xdens <- cowplot::axis_canvas(p0, axis = "x") +
+    geom_density(
+      data = x,
+      aes(x = PC1, fill = Makro_Region),
+      alpha = 0.7
+    )
+  ydens <- cowplot::axis_canvas(p0, axis = "y", coord_flip = TRUE) +
+    geom_density(
+      data = x,
+      aes(x = PC2, fill = Makro_Region),
+      alpha = 0.7
+    ) +
+    coord_flip()
+  p1 <- cowplot::insert_xaxis_grob(p0, xdens, grid::unit(.2, "null"), position = "top")
+  p2 <- cowplot::insert_yaxis_grob(p1, ydens, grid::unit(.2, "null"), position = "right")
+  cowplot::ggdraw(p2)
+}
+
+
+shinyImpute <- function() {
+  lookup_function <- function(x) {
+    switch(
+      x,
+      "mean" = missMethods::impute_mean,
+      "median" = missMethods::impute_median,
+      "mode" = missMethods::impute_mode,
+      "sRHD" = missMethods::impute_sRHD
+    )
+  }
+  ui <- shiny::fluidPage(    
+    shiny::sidebarLayout(      
+      shiny::sidebarPanel(
+        shiny::selectInput(
+          "impute_method", "Imputation method:", choices = c(
+            "mean", "median", "mode", "sRHD"
+          )
+        ),
+        shiny::numericInput(
+          "destruction_level", "Destruction level:", value = 0
+        ),
+        shiny::selectInput(
+          "labels", "Print labels:", choices = c(
+            "none", "all"
+          )
+        ),
+      ),
+      shiny::mainPanel(
+        shiny::plotOutput("myplot")  
+      )
+    )
+  )
+  server <- function(input, output) {
+    output$myplot <- shiny::renderPlot({
+      geno_matrix %>% explore_filling_method(
+        lookup_function(input$impute_method),
+        input$destruction_level,
+        use.labels = input$labels
+      )
+    })
+  }
+  shiny::shinyApp(ui = ui, server = server)
+}
 tidy_pca_output <- function(x, context = context_info) {
   pnf_tidy_obs <- x$x %>%
     tibble::as_tibble() %>%

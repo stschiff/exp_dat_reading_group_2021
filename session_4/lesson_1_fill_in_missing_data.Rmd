@@ -164,7 +164,7 @@ This implementation has one issue: it can accidentally wipe out entire columns. 
 # shoot_holes_column_wise()
 destruction_level <- 0.3 # desired percentage of missingness
 nr_holes_per_column <- round((destruction_level * prod(dim(x)))/ncol(x))
-x_Tilsit <- apply(x, 2, function(y) {
+x_Tilsit <- apply(x, 1, function(y) {
   holes <- sample(seq_along(y), size = nr_holes_per_column)
   y[holes] <- NA
   y
@@ -200,7 +200,7 @@ patch_holes_mean <- function(x) {
 
 ```{r}
 geno_matrix %>%
-  shoot_holes_column_wise(0.5) %>%
+  shoot_holes_column_wise(.9) %>%
   patch_holes_mean() %>%
   prcomp(geno_matrix) %>%
   tidy_pca_output() %>%
@@ -219,6 +219,33 @@ Let's play with these functions. Do they differ? Modify the `destruction_level` 
 
 ```{r,eval=FALSE}
 shinyImpute()
+```
+
+
+### Variable levels of missingness
+A short brief of non-uniform missigness. This will randomly add between 10 and 90% missingness to data:
+
+```{r}
+
+p_basic = geno_matrix %>% prcomp %>% tidy_pca_output %>% plot_tidy_pca_simple
+p_basic
+Y = geno_matrix %>%
+   shoot_holes_column_wise_nonunif(0.1, .9) 
+
+p_meanimpute = Y %>%
+   patch_holes_mean %>%
+   prcomp(geno_matrix) %>%
+   tidy_pca_output() %>%
+   plot_tidy_pca_simple()
+p_meanimpute
+
+#compare to softimpute
+require(softImpute)
+y_softimpute = Y %>% scale(scale=F) %>% softImpute
+y_softimpute$x = y_softimpute$u
+colnames(y_softimpute$x) = sprintf("PC%d", 1:ncol(y_softimpute$x))
+p_softimpute = y_softimpute %>% tidy_pca_output %>% plot_tidy_pca_simple()
+p_softimpute
 ```
 
 ### Other imputation algorithms
