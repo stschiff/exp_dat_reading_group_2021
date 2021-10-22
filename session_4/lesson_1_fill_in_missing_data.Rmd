@@ -239,6 +239,21 @@ p_meanimpute = Y %>%
    plot_tidy_pca_simple()
 p_meanimpute
 
+# missingness plot
+Y %>%
+  patch_holes_mean %>%
+  prcomp(geno_matrix) %>%
+  tidy_pca_output() %>%
+  dplyr::mutate(
+    missingness = apply(Y, 1, function(x) { sum(is.na(x)) })/ncol(Y)
+  ) %>%
+  ggplot() +
+  geom_point(
+    aes(x = PC1, y = PC2, colour = missingness ),
+    size = 3
+  ) +
+  scale_color_viridis_c()
+
 #compare to softimpute
 require(softImpute)
 y_softimpute = Y %>% scale(scale=F) %>% softImpute
