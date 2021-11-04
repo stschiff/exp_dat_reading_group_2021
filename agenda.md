@@ -39,7 +39,7 @@
 - Goal: Try out various missing data techniques
 
 ### Session 6: Structure / Admixture
-- Date: Oct 29, 2021
+- Date: Nov 5, 2021
 - Presenters: Leonardo A., Ke
 - Reading: 
   - Pritchard et al. 2000
@@ -47,7 +47,7 @@
   - maybe some review (for example Falush "Badmixture")
     
 ### Session 7 (Practical): How to run Admixture?
-- Date: Nov 5, 2021
+- Date: Nov 12, 2021
 - Presenters: Sandra, Laura, Joscha
 - Tool: [ADMIXTURE](https://dalexander.github.io/admixture/download.html)
 - Tasks: Run admixture
@@ -57,13 +57,13 @@
     - Dystruct?
 
 ### Session 8: Foundational principles behind PCA/Admixture
-- Date: Nov 12, 2021
+- Date: Nov 19, 2021
 - Presenters: Stephan, Federica, Alba
 - Reading: Engelhardt and Stephens, “Analysis of Population Structure.”
 - Reading: McVean 2009
 
 ### Session 9 (Practical): Simulations / predictions
-- Date: Nov 19, 2021
+- Date: Nov 26, 2021
 - Presenters: Leonardo I., Arev
 - Tool: [msprime](https://tskit.dev/msprime/docs/stable/intro.html)
 - Tasks 
@@ -71,22 +71,14 @@
     - Task: Predicted PCA vs Simulations
 
 ### Session 9: Topic TBD
-- Date: Nov 19, 2021
-- Presenters:
-
-### Session 10: Topic TBD
-- Date: Nov 26, 2021
-- Presenters:
-
-### Session 11: Topic TBD
 - Date: Dec 3, 2021
 - Presenters:
 
-### Session 12: Topic TBD
+### Session 10: Topic TBD
 - Date: Dec 10, 2021
 - Presenters:
 
-### Session 13: Topic TBD
+### Session 11: Topic TBD
 - Date: Dec 17, 2021
 - Presenters:
 
