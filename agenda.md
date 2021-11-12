@@ -57,13 +57,13 @@
     - Dystruct?
 
 ### Session 8: Foundational principles behind PCA/Admixture
-- Date: Nov 19, 2021
+- Date: Nov 26, 2021
 - Presenters: Stephan, Federica, Alba
 - Reading: Engelhardt and Stephens, “Analysis of Population Structure.”
 - Reading: McVean 2009
 
 ### Session 9 (Practical): Simulations / predictions
-- Date: Nov 26, 2021
+- Date: Dec 3, 2021
 - Presenters: Leonardo I., Arev
 - Tool: [msprime](https://tskit.dev/msprime/docs/stable/intro.html)
 - Tasks 
