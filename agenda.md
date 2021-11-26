@@ -73,7 +73,7 @@
 ### Session 10: F-Statistics and PCA/MDS
 - Date: Dec 17, 2021
 - Presenters: Ben Peter
-- Reading: [](https://www.biorxiv.org/content/10.1101/2021.07.13.452141v2)
+- Reading: [https://www.biorxiv.org/content/10.1101/2021.07.13.452141v2](https://www.biorxiv.org/content/10.1101/2021.07.13.452141v2)
 
 ## Further topics:
 - non-linear projections
