@@ -63,24 +63,16 @@
 - Reading: McVean 2009
 
 ### Session 9 (Practical): Simulations / predictions
-- Date: Dec 3, 2021
+- Date: Dec 10, 2021
 - Presenters: Leonardo I., Arev
 - Tool: [msprime](https://tskit.dev/msprime/docs/stable/intro.html)
 - Tasks 
     - Simulation with sample sizes / coalescence rates
     - Task: Predicted PCA vs Simulations
 
-### Session 9: Topic TBD
-- Date: Dec 3, 2021
-- Presenters:
-
-### Session 10: Topic TBD
-- Date: Dec 10, 2021
-- Presenters:
-
-### Session 11: Topic TBD
+### Session 10: F-Statistics and PCA/MDS
 - Date: Dec 17, 2021
-- Presenters:
+- Presenters: Ben Peter
 
 ## Further topics:
 - non-linear projections
